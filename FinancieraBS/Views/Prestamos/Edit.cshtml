@@ -1,0 +1,60 @@
+@model BusinessType.Prestamo
+
+@{
+    ViewData["Title"] = "Editar Préstamo";
+}
+
+<div class="container mt-4">
+    <h2>Editar Préstamo</h2>
+    
+    <form asp-action="Edit" method="post" class="mt-4">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="ClienteId" class="form-label">Cliente</label>
+                <select asp-for="ClienteId" class="form-select" asp-items="ViewBag.Clientes" required>
+                    <option value="">Seleccione un cliente</option>
+                </select>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label asp-for="MontoSolicitado" class="form-label">Monto Solicitado</label>
+                <input asp-for="MontoSolicitado" type="number" step="0.01" class="form-control" required />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="FechaInicio" class="form-label">Fecha de Inicio</label>
+                <input asp-for="FechaInicio" type="date" class="form-control" required />
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label asp-for="Interes" class="form-label">Interés (%)</label>
+                <input asp-for="Interes" type="number" step="0.01" class="form-control" required />
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="Estatus" class="form-label">Estatus</label>
+                <select asp-for="Estatus" class="form-select">
+                    <option value="1">Pagado</option>
+                    <option value="2">En Proceso</option>
+                    <option value="3">Retraso</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="SaldoRestante" class="form-label">Saldo Restante</label>
+                <input asp-for="SaldoRestante" type="number" step="0.01" class="form-control" required />
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Actualizar</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>

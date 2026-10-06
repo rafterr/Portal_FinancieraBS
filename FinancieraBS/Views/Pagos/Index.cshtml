@@ -1,0 +1,43 @@
+@model List<BusinessType.Pago>
+
+@{
+    ViewData["Title"] = "Pagos";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Pagos</h2>
+        <a asp-action="Create" class="btn btn-primary">Registrar Pago</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Préstamo</th>
+                    <th>Cliente</th>
+                    <th>Monto</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pago in Model)
+                {
+                    <tr>
+                        <td>@pago.Id</td>
+                        <td>@pago.PrestamoId</td>
+                        <td>@(pago.Cliente?.Nombre ?? "N/A")</td>
+                        <td>$@pago.MontoPago.ToString("N2")</td>
+                        <td>@pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@pago.Id" class="btn btn-sm btn-warning">Editar</a>
+                            <a asp-action="Delete" asp-route-id="@pago.Id" class="btn btn-sm btn-danger">Eliminar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

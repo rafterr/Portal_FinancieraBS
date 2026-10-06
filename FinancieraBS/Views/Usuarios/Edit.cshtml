@@ -1,0 +1,37 @@
+@model BusinessType.Usuario
+
+@{
+    ViewData["Title"] = "Editar Usuario";
+}
+
+<div class="container mt-4">
+    <h2>Editar Usuario</h2>
+    
+    <form asp-action="Edit" method="post" class="mt-4">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="UserName" class="form-label">Nombre de Usuario</label>
+                <input asp-for="UserName" class="form-control" required />
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" type="email" class="form-control" required />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="PhoneNumber" class="form-label">Teléfono</label>
+                <input asp-for="PhoneNumber" class="form-control" />
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Actualizar</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>

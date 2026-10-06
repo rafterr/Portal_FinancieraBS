@@ -1,0 +1,39 @@
+@model BusinessType.Pago
+
+@{
+    ViewData["Title"] = "Eliminar Pago";
+}
+
+<div class="container mt-4">
+    <h2>Eliminar Pago</h2>
+    <div class="alert alert-danger mt-4">
+        <h4>¿Está seguro de eliminar este pago?</h4>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">ID</dt>
+                <dd class="col-sm-9">@Model.Id</dd>
+
+                <dt class="col-sm-3">Préstamo</dt>
+                <dd class="col-sm-9">@Model.PrestamoId</dd>
+
+                <dt class="col-sm-3">Cliente</dt>
+                <dd class="col-sm-9">@(Model.Cliente?.Nombre ?? "N/A")</dd>
+
+                <dt class="col-sm-3">Monto</dt>
+                <dd class="col-sm-9">$@Model.MontoPago.ToString("N2")</dd>
+
+                <dt class="col-sm-3">Fecha</dt>
+                <dd class="col-sm-9">@Model.FechaPago.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <form asp-action="Delete" method="post" class="mt-3">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
