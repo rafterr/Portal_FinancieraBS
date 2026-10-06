@@ -1,5 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -31,9 +31,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Pagos" asp-action="Index">Pagos</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
-                        </li>
+                        @if (User.IsInRole(BusinessType.Roles.Admin))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
+                            </li>
+                        }
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity?.IsAuthenticated == true)
@@ -64,6 +67,13 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
+            @if (TempData["Error"] is string error)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    @error
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            }
             @RenderBody()
         </main>
     </div>

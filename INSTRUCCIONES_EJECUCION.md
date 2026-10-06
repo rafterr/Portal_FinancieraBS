@@ -107,7 +107,7 @@ Asegúrate de tener configurado:
     "ApiKey": "TU_API_KEY",
     "Bucket": "tu-proyecto.appspot.com",
     "AuthEmail": "rbarronfuentes@gmail.com",
-    "AuthPassword": "Himz66rafterr18"
+    "AuthPassword": "<TU_PASSWORD>"
   }
 }
 ```
@@ -191,10 +191,10 @@ Si encuentras problemas:
 
 **Base de datos MySQL**:
 - Usuario: `root`
-- Password: `HIMz66rafterr18`
+- Password: `<TU_PASSWORD>`
 
 **Firebase**:
 - Email: `rbarronfuentes@gmail.com`
-- Password: `Himz66rafterr18`
+- Password: `<TU_PASSWORD>`
 
 ⚠️ **Importante**: Cambia estas credenciales en producción.

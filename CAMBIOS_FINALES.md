@@ -41,7 +41,7 @@
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=financiera_bs;User=root;Password=HIMz66rafterr18;"
+    "DefaultConnection": "Server=localhost;Database=financiera_bs;User=root;Password=<TU_PASSWORD>;"
   }
 }
 ```
@@ -49,7 +49,7 @@
 **Base de datos creada**:
 - Nombre: `financiera_bs`
 - Usuario: `root`
-- Password: `HIMz66rafterr18`
+- Password: `<TU_PASSWORD>`
 - Tablas creadas: AspNetUsers, Clientes, Prestamos, Pagos
 - Índices optimizados para consultas
 
@@ -122,7 +122,7 @@ Para habilitar la carga de documentos, configura Firebase:
   "ApiKey": "TU_API_KEY_AQUI",
   "Bucket": "tu-proyecto.appspot.com",
   "AuthEmail": "rbarronfuentes@gmail.com",
-  "AuthPassword": "Himz66rafterr18"
+  "AuthPassword": "<TU_PASSWORD>"
 }
 ```
 
@@ -142,7 +142,7 @@ dotnet run --project FinancieraBS
 
 ### Verificar base de datos:
 ```bash
-mysql -u root -pHIMz66rafterr18 -e "USE financiera_bs; SHOW TABLES;"
+mysql -u root -p<TU_PASSWORD> -e "USE financiera_bs; SHOW TABLES;"
 ```
 
 ### Compilar proyecto:

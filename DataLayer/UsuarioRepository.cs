@@ -1,109 +1,71 @@
-﻿using BusinessType;
+using BusinessType;
 using DataInterfase;
-
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using IdentityResult = Microsoft.AspNetCore.Identity.IdentityResult;
 
 namespace DataLayer
 {
+    // Todas las operaciones pasan por UserManager para que Identity normalice
+    // nombres/correos, cifre contraseñas y mantenga el SecurityStamp.
     public class UsuarioRepository : IUsuarioRepository
     {
-        private readonly FinancieraContext _context;
-        private readonly Microsoft.AspNetCore.Identity.UserManager<Usuario> _userManager; // Add UserManager<Usuario> dependency
-        private readonly ILogger<UsuarioRepository> _logger;
+        private readonly UserManager<Usuario> _userManager;
 
-        public UsuarioRepository(FinancieraContext context, Microsoft.AspNetCore.Identity.UserManager<Usuario> userManager)
+        public UsuarioRepository(UserManager<Usuario> userManager)
         {
-            _context = context;
-            _userManager = userManager; // Initialize UserManager<Usuario>
+            _userManager = userManager;
         }
 
-        // Crear usuario
-        public async Task<Usuario> CreateAsync(Usuario usuario)
-        {
-            _context.Add(usuario);
-            await _context.SaveChangesAsync();
-            return usuario;
-        }
-
-        // Obtener usuario por Id
-        public async Task<Usuario?> GetByIdAsync(string id)
-        {
-            return await _context.Set<Usuario>().FindAsync(id);
-        }
-
-        // Obtener usuario por UserName
-        public async Task<Usuario?> GetByUserNameAsync(string username)
-        {
-            return await _context.Set<Usuario>().FirstOrDefaultAsync(u => u.UserName == username);
-        }
-
-        // Reemplazar el método GetAllAsync para corregir el error CS1061
         public async Task<List<Usuario>> GetAllAsync()
         {
-            return await _context.Set<Usuario>().ToListAsync();
+            return await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
         }
 
-        // Actualizar usuario
-        public async Task<bool> UpdateAsync(Usuario usuario)
+        public async Task<Usuario?> GetByIdAsync(string id)
         {
-            var existing = await _context.Set<Usuario>().FindAsync(usuario.Id);
-            if (existing == null) return false;
-
-            _context.Entry(existing).CurrentValues.SetValues(usuario);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _userManager.FindByIdAsync(id);
         }
 
-        // Eliminar usuario
-        public async Task<bool> DeleteAsync(string id)
+        public async Task<IdentityResult> CreateAsync(Usuario usuario, string password)
         {
-            var usuario = await _context.Set<Usuario>().FindAsync(id);
-            if (usuario == null) return false;
-
-            _context.Set<Usuario>().Remove(usuario);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _userManager.CreateAsync(usuario, password);
         }
 
-        // Validar usuario y contraseña
-        public async Task<bool> ValidateUserAsync(string userName, string password)
+        public async Task<IdentityResult> UpdateAsync(Usuario usuario)
         {
-            var usuario = await GetByUserNameAsync(userName);
-            if (usuario == null) return false;
-            return await _userManager.CheckPasswordAsync(usuario, password);
+            return await _userManager.UpdateAsync(usuario);
         }
 
-        // Actualizar contraseña del usuario
-        public async Task<bool> UpdatePasswordAsync(string userId, string newPassword)
+        public async Task<IdentityResult> DeleteAsync(Usuario usuario)
         {
-            IdentityResult result = new IdentityResult();
-            var usuario = await GetByIdAsync(userId);
-            if (usuario == null)
-            {                
-               _logger.LogError("Usuario no encontrado");
-                return false;
-            }
+            return await _userManager.DeleteAsync(usuario);
+        }
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(usuario); // Use UserManager to generate token
-            if (token == null)
-            {
-                _logger.LogError("No se pudo generar el token de restablecimiento");
-                return false;
-            }
+        public async Task<IdentityResult> ResetPasswordAsync(Usuario usuario, string newPassword)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(usuario);
+            return await _userManager.ResetPasswordAsync(usuario, token, newPassword);
+        }
 
-            result = await _userManager.ResetPasswordAsync(usuario, token, newPassword);
+        public async Task<string?> GetRolAsync(Usuario usuario)
+        {
+            return (await _userManager.GetRolesAsync(usuario)).FirstOrDefault();
+        }
 
-            if(result.Succeeded)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+        public async Task<IdentityResult> SetRolAsync(Usuario usuario, string rol)
+        {
+            var actuales = await _userManager.GetRolesAsync(usuario);
+            if (actuales.Count == 1 && actuales[0] == rol)
+                return IdentityResult.Success;
+
+            var result = await _userManager.RemoveFromRolesAsync(usuario, actuales);
+            if (!result.Succeeded) return result;
+            return await _userManager.AddToRoleAsync(usuario, rol);
+        }
+
+        public async Task<int> CountInRolAsync(string rol)
+        {
+            return (await _userManager.GetUsersInRoleAsync(rol)).Count;
         }
     }
 }

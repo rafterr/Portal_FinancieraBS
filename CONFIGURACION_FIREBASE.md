@@ -15,7 +15,7 @@
 2. Habilita el método de autenticación **Email/Password**
 3. Agrega el usuario:
    - Email: `rbarronfuentes@gmail.com`
-   - Password: `Himz66rafterr18`
+   - Password: `<TU_PASSWORD>`
 
 ### 3. Configurar Storage Rules
 
@@ -51,7 +51,7 @@ Edita el archivo `FinancieraBS/appsettings.json` y reemplaza los valores:
     "ApiKey": "TU_API_KEY_AQUI",
     "Bucket": "tu-proyecto.appspot.com",
     "AuthEmail": "rbarronfuentes@gmail.com",
-    "AuthPassword": "Himz66rafterr18"
+    "AuthPassword": "<TU_PASSWORD>"
   }
 }
 ```

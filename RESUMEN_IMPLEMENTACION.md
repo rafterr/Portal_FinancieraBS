@@ -64,7 +64,7 @@ Se ha completado exitosamente la implementación de un sistema completo de gesti
 - ✅ Servicio de Firebase implementado
 - ✅ Autenticación con credenciales proporcionadas:
   - Email: `rbarronfuentes@gmail.com`
-  - Password: `Himz66rafterr18`
+  - Password: `<TU_PASSWORD>`
 - ✅ Estructura de carpetas automática:
   - `/pagares` - Documentos de pagaré
   - `/ines` - Identificaciones oficiales
@@ -156,7 +156,7 @@ FinancieraBS/
 #### 1. Base de Datos MySQL
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=localhost;Database=FinancieraBS;User=root;Password=HIMz66rafterr18;"
+  "DefaultConnection": "Server=localhost;Database=FinancieraBS;User=root;Password=<TU_PASSWORD>;"
 }
 ```
 
@@ -166,7 +166,7 @@ FinancieraBS/
   "ApiKey": "TU_API_KEY_AQUI",
   "Bucket": "tu-proyecto.appspot.com",
   "AuthEmail": "rbarronfuentes@gmail.com",
-  "AuthPassword": "Himz66rafterr18"
+  "AuthPassword": "<TU_PASSWORD>"
 }
 ```
 

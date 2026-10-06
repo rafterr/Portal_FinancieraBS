@@ -1,16 +1,16 @@
-﻿using BusinessType;
+using BusinessType;
+using Microsoft.AspNetCore.Identity;
 
 namespace BusinessInterfase
 {
+    public record UsuarioConRol(Usuario Usuario, string? Rol);
+
     public interface IUsuarioProcessor
     {
-        Task<bool> ValidarUsuario(string usuario, string password);
-        Task<Usuario> RegistrarUsuario(Usuario usuario);
-        Task<bool> CambiarPassword(string usuario, string passwordActual, string nuevoPassword);
-        Task<bool> EliminarUsuario(string id);
-        Task<List<Usuario>> ObtenerUsuarios();
-        Task<Usuario?> ObtenerUsuarioPorId(string id);
-        Task<bool> ActualizarUsuario(Usuario usuario);
-
+        Task<List<UsuarioConRol>> ObtenerUsuarios();
+        Task<UsuarioConRol?> ObtenerUsuarioPorId(string id);
+        Task<IdentityResult> RegistrarUsuario(Usuario usuario, string password, string rol);
+        Task<IdentityResult> ActualizarUsuario(string id, string email, string? telefono, string rol, string? nuevoPassword, string idUsuarioActual);
+        Task<IdentityResult> EliminarUsuario(string id, string idUsuarioActual);
     }
 }

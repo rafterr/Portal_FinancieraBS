@@ -3,6 +3,7 @@ using BusinessLayer;
 using BusinessType;
 using DataInterfase;
 using DataLayer;
+using FinancieraBS.Data;
 using FinancieraBS.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,16 +20,22 @@ builder.Services.AddDbContext<FinancieraContext>(options =>
 // Configurar Identity
 builder.Services.AddIdentity<Usuario, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 4;
-    
-    // Configurar cookies de autenticación
+
+    // Bloqueo tras intentos fallidos
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.AllowedForNewUsers = true;
+
+    options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedAccount = false;
     options.SignIn.RequireConfirmedEmail = false;
 })
+.AddErrorDescriber<SpanishIdentityErrorDescriber>()
 .AddEntityFrameworkStores<FinancieraContext>()
 .AddDefaultTokenProviders();
 
@@ -37,8 +44,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/Login";
-    options.ExpireTimeSpan = TimeSpan.FromHours(24);
+    options.AccessDeniedPath = "/Account/AccesoDenegado";
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.Cookie.HttpOnly = true;
+    // En producción la cookie solo viaja por HTTPS; en local se permite el perfil http
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
     options.SlidingExpiration = true;
 });
 
@@ -70,6 +82,8 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
+await IdentitySeeder.SeedAsync(app.Services);
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -89,4 +103,4 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Run();
+await app.RunAsync();

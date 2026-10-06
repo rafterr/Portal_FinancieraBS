@@ -37,7 +37,7 @@ namespace FinancieraBS.Controllers
                     return View();
                 }
 
-                var result = await _signInManager.PasswordSignInAsync(user.UserName ?? email, password, isPersistent: true, lockoutOnFailure: false);
+                var result = await _signInManager.PasswordSignInAsync(user.UserName ?? email, password, isPersistent: false, lockoutOnFailure: true);
 
                 if (result.Succeeded)
                 {
@@ -48,9 +48,17 @@ namespace FinancieraBS.Controllers
                     return RedirectToAction("Index", "Clientes");
                 }
 
-                ModelState.AddModelError(string.Empty, "Usuario o contraseña incorrectos.");
+                ModelState.AddModelError(string.Empty, result.IsLockedOut
+                    ? "La cuenta está bloqueada temporalmente por intentos fallidos. Intente de nuevo en 15 minutos."
+                    : "Usuario o contraseña incorrectos.");
             }
 
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult AccesoDenegado()
+        {
             return View();
         }
 
@@ -60,46 +68,6 @@ namespace FinancieraBS.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Login", "Account");
-        }
-
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(string email, string password, string confirmPassword, string? phoneNumber = null)
-        {
-            if (password != confirmPassword)
-            {
-                ModelState.AddModelError(string.Empty, "Las contraseñas no coinciden.");
-                return View();
-            }
-
-            var user = new Usuario
-            {
-                UserName = email,
-                Email = email,
-                PhoneNumber = phoneNumber,
-                FechaCreacion = DateTime.UtcNow
-            };
-
-            var result = await _userManager.CreateAsync(user, password);
-
-            if (result.Succeeded)
-            {
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToAction("Index", "Clientes");
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            return View();
         }
     }
 }

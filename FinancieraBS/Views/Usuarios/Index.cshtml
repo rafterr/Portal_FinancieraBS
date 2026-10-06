@@ -1,4 +1,4 @@
-@model List<BusinessType.Usuario>
+@model List<BusinessInterfase.UsuarioConRol>
 
 @{
     ViewData["Title"] = "Usuarios";
@@ -14,18 +14,28 @@
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
-                    <th>Usuario</th>
                     <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Rol</th>
                     <th>Fecha Creación</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var usuario in Model)
+                @foreach (var item in Model)
                 {
+                    var usuario = item.Usuario;
+                    var bloqueado = usuario.LockoutEnd.HasValue && usuario.LockoutEnd > DateTimeOffset.UtcNow;
                     <tr>
-                        <td>@usuario.UserName</td>
-                        <td>@usuario.Email</td>
+                        <td>
+                            @usuario.Email
+                            @if (bloqueado)
+                            {
+                                <span class="badge bg-danger ms-1">Bloqueado</span>
+                            }
+                        </td>
+                        <td>@usuario.PhoneNumber</td>
+                        <td><span class="badge bg-@(item.Rol == BusinessType.Roles.Admin ? "dark" : "info")">@(item.Rol ?? "Sin rol")</span></td>
                         <td>@usuario.FechaCreacion.ToString("dd/MM/yyyy")</td>
                         <td>
                             <a asp-action="Edit" asp-route-id="@usuario.Id" class="btn btn-sm btn-warning">Editar</a>

@@ -1,15 +1,18 @@
-﻿using BusinessType;
+using BusinessType;
+using Microsoft.AspNetCore.Identity;
 
 namespace DataInterfase
 {
     public interface IUsuarioRepository
     {
-         Task<Usuario> CreateAsync(Usuario usuario);
-         Task<Usuario?> GetByIdAsync(string id);
-         Task<List<Usuario>> GetAllAsync();
-         Task<bool> UpdateAsync(Usuario usuario);
-         Task<bool> DeleteAsync(string id);
-        Task<bool> ValidateUserAsync(string userName, string password);
-        Task<bool> UpdatePasswordAsync(string userId, string newPassword);
+        Task<List<Usuario>> GetAllAsync();
+        Task<Usuario?> GetByIdAsync(string id);
+        Task<IdentityResult> CreateAsync(Usuario usuario, string password);
+        Task<IdentityResult> UpdateAsync(Usuario usuario);
+        Task<IdentityResult> DeleteAsync(Usuario usuario);
+        Task<IdentityResult> ResetPasswordAsync(Usuario usuario, string newPassword);
+        Task<string?> GetRolAsync(Usuario usuario);
+        Task<IdentityResult> SetRolAsync(Usuario usuario, string rol);
+        Task<int> CountInRolAsync(string rol);
     }
 }
