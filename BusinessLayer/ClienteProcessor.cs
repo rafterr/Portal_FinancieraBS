@@ -7,10 +7,14 @@ namespace BusinessLayer
     public class ClienteProcessor : IClienteProcessor
     {
         private readonly IClienteRepository _clienteRepository;
+        private readonly IDocumentoRepository _documentoRepository;
+        private readonly IDocumentoStorage _documentoStorage;
 
-        public ClienteProcessor(IClienteRepository clienteRepository)
+        public ClienteProcessor(IClienteRepository clienteRepository, IDocumentoRepository documentoRepository, IDocumentoStorage documentoStorage)
         {
             _clienteRepository = clienteRepository;
+            _documentoRepository = documentoRepository;
+            _documentoStorage = documentoStorage;
         }
 
         public async Task<Cliente?> GetByIdAsync(int id)
@@ -34,14 +38,13 @@ namespace BusinessLayer
             var existente = await _clienteRepository.GetByIdAsync(cliente.Id);
             if (existente == null) return ResultadoOperacion.Falla("El cliente no existe.");
 
-            // Solo los datos capturables; se conservan el usuario que lo creó y sus documentos
+            // Solo los datos capturables; se conserva el usuario que lo creó
             existente.Nombre = cliente.Nombre;
             existente.Apellidos = cliente.Apellidos;
             existente.Direccion = cliente.Direccion;
             existente.Telefono = cliente.Telefono;
             existente.Email = cliente.Email;
             existente.Estatus = cliente.Estatus;
-            if (cliente.ComprobanteDomicilioPath != null) existente.ComprobanteDomicilioPath = cliente.ComprobanteDomicilioPath;
 
             await _clienteRepository.UpdateAsync(existente);
             return ResultadoOperacion.Ok();
@@ -52,9 +55,14 @@ namespace BusinessLayer
             if (await _clienteRepository.TienePrestamosAsync(id))
                 return ResultadoOperacion.Falla("No se puede eliminar un cliente con préstamos registrados.");
 
-            return await _clienteRepository.DeleteAsync(id)
-                ? ResultadoOperacion.Ok()
-                : ResultadoOperacion.Falla("El cliente no existe.");
+            var documentos = await _documentoRepository.GetByClienteIdAsync(id);
+            if (!await _clienteRepository.DeleteAsync(id))
+                return ResultadoOperacion.Falla("El cliente no existe.");
+
+            // Los registros se borran en cascada; aquí se eliminan los archivos
+            foreach (var documento in documentos)
+                await _documentoStorage.EliminarAsync(documento.Ruta);
+            return ResultadoOperacion.Ok();
         }
     }
 }

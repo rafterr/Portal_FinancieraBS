@@ -1,6 +1,6 @@
 using BusinessInterfase;
 using BusinessType;
-using FinancieraBS.Services;
+using FinancieraBS.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,14 +13,14 @@ namespace FinancieraBS.Controllers
     {
         private readonly IPrestamoProcessor _prestamoProcessor;
         private readonly IClienteProcessor _clienteProcessor;
-        private readonly IFirebaseStorageService _firebaseStorage;
+        private readonly IDocumentoProcessor _documentoProcessor;
         private readonly UserManager<Usuario> _userManager;
 
-        public PrestamosController(IPrestamoProcessor prestamoProcessor, IClienteProcessor clienteProcessor, IFirebaseStorageService firebaseStorage, UserManager<Usuario> userManager)
+        public PrestamosController(IPrestamoProcessor prestamoProcessor, IClienteProcessor clienteProcessor, IDocumentoProcessor documentoProcessor, UserManager<Usuario> userManager)
         {
             _prestamoProcessor = prestamoProcessor;
             _clienteProcessor = clienteProcessor;
-            _firebaseStorage = firebaseStorage;
+            _documentoProcessor = documentoProcessor;
             _userManager = userManager;
         }
 
@@ -40,21 +40,34 @@ namespace FinancieraBS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Prestamo prestamo, IFormFile? pagareFile, IFormFile? ineFile)
         {
+            var archivos = new List<(TipoDocumento Tipo, IFormFile Archivo)>();
+            if (pagareFile != null) archivos.Add((TipoDocumento.Pagare, pagareFile));
+            if (ineFile != null) archivos.Add((TipoDocumento.Ine, ineFile));
+
+            foreach (var (_, archivo) in archivos)
+            {
+                var validacion = _documentoProcessor.Validar(archivo.ComoArchivoSubido());
+                if (!validacion.Exito) ModelState.AddModelError(string.Empty, validacion.Error!);
+            }
+
             if (ModelState.IsValid)
             {
-                var resultado = await _prestamoProcessor.CrearAsync(prestamo, _userManager.GetUserId(User));
+                var usuarioId = _userManager.GetUserId(User);
+                var resultado = await _prestamoProcessor.CrearAsync(prestamo, usuarioId);
                 if (resultado.Exito)
                 {
-                    var cliente = await _clienteProcessor.GetByIdAsync(prestamo.ClienteId);
-                    if (cliente != null && (pagareFile != null || ineFile != null))
+                    var errores = new List<string>();
+                    foreach (var (tipo, archivo) in archivos)
                     {
-                        if (pagareFile != null)
-                            cliente.PagarePath = await _firebaseStorage.UploadFileAsync(pagareFile, "pagares", $"{Guid.NewGuid()}_{pagareFile.FileName}");
-                        if (ineFile != null)
-                            cliente.InePath = await _firebaseStorage.UploadFileAsync(ineFile, "ines", $"{Guid.NewGuid()}_{ineFile.FileName}");
-                        await _clienteProcessor.ActualizarAsync(cliente);
+                        var subida = await _documentoProcessor.SubirAsync(archivo.ComoArchivoSubido(), tipo, prestamo.ClienteId, prestamo.Id, usuarioId);
+                        if (!subida.Exito) errores.Add(subida.Error!);
                     }
-                    return RedirectToAction(nameof(Index));
+
+                    if (errores.Count == 0)
+                        return RedirectToAction(nameof(Index));
+
+                    TempData["Error"] = "El préstamo se guardó, pero hubo errores con los documentos: " + string.Join(" ", errores);
+                    return RedirectToAction(nameof(Edit), new { id = prestamo.Id });
                 }
                 ModelState.AddModelError(string.Empty, resultado.Error!);
             }
@@ -69,6 +82,7 @@ namespace FinancieraBS.Controllers
             if (prestamo == null) return NotFound();
 
             await CargarClientesAsync(prestamo.ClienteId);
+            await CargarDocumentosAsync(prestamo);
             return View(prestamo);
         }
 
@@ -84,7 +98,13 @@ namespace FinancieraBS.Controllers
                 ModelState.AddModelError(string.Empty, resultado.Error!);
             }
 
+            // Total y saldo se muestran con los valores guardados
+            var guardado = await _prestamoProcessor.GetByIdAsync(prestamo.Id);
+            if (guardado == null) return NotFound();
+            prestamo.SaldoRestante = guardado.SaldoRestante;
+
             await CargarClientesAsync(prestamo.ClienteId);
+            await CargarDocumentosAsync(guardado);
             return View(prestamo);
         }
 
@@ -102,6 +122,18 @@ namespace FinancieraBS.Controllers
             var resultado = await _prestamoProcessor.EliminarAsync(id);
             if (!resultado.Exito) TempData["Error"] = resultado.Error;
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task CargarDocumentosAsync(Prestamo prestamo)
+        {
+            ViewBag.Documentos = new DocumentosViewModel
+            {
+                Documentos = await _documentoProcessor.GetByPrestamoIdAsync(prestamo.Id),
+                ClienteId = prestamo.ClienteId,
+                PrestamoId = prestamo.Id,
+                TiposPermitidos = new[] { TipoDocumento.Pagare, TipoDocumento.Ine },
+                ReturnUrl = Url.Action(nameof(Edit), new { id = prestamo.Id })!
+            };
         }
 
         private async Task CargarClientesAsync(int? seleccionado)

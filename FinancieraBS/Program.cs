@@ -4,17 +4,19 @@ using BusinessType;
 using DataInterfase;
 using DataLayer;
 using FinancieraBS.Data;
-using FinancieraBS.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// La cadena de conexión viene de User Secrets (local) o de appsettings.Production.json / variables
+// de entorno (hosting). Nunca se guarda en el repositorio.
 builder.Services.AddDbContext<FinancieraContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 25))
+        new MySqlServerVersion(new Version(8, 0, 25)),
+        mySql => mySql.MigrationsAssembly("DataLayer")
     ));
 
 // Configurar Identity
@@ -59,15 +61,29 @@ builder.Services.AddTransient<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddTransient<IClienteRepository, ClienteRepository>();
 builder.Services.AddTransient<IPrestamoRepository, PrestamoRepository>();
 builder.Services.AddTransient<IpagoRepository, PagoRepository>();
+builder.Services.AddTransient<IDocumentoRepository, DocumentoRepository>();
 
 // Procesadores
 builder.Services.AddTransient<IUsuarioProcessor, UsuarioProcessor>();
 builder.Services.AddTransient<IClienteProcessor, ClienteProcessor>();
 builder.Services.AddTransient<IPrestamoProcessor, PrestamoProcessor>();
 builder.Services.AddTransient<IPagoProcessor, PagoProcessor>();
+builder.Services.AddTransient<IDocumentoProcessor, DocumentoProcessor>();
 
-// Firebase Storage Service
-builder.Services.AddSingleton<IFirebaseStorageService, FirebaseStorageService>();
+// Documentos: carpeta privada fuera de wwwroot (no se sirve como archivo estático)
+var rutaDocumentos = Path.Combine(builder.Environment.ContentRootPath,
+    builder.Configuration["Documentos:RutaAlmacenamiento"] ?? Path.Combine("App_Data", "documentos"));
+builder.Services.AddSingleton<IDocumentoStorage>(new LocalDocumentoStorage(rutaDocumentos));
+builder.Services.AddSingleton(new DocumentoOptions
+{
+    TamanoMaximoBytes = builder.Configuration.GetValue("Documentos:TamanoMaximoMB", 5) * 1024L * 1024L
+});
+
+// Llaves de cookies/antiforgery persistentes: en hosting compartido evita que se cierren
+// las sesiones cada vez que se recicla la aplicación
+builder.Services.AddDataProtection()
+    .SetApplicationName("FinancieraBS")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys")));
 
 builder.Services.AddControllersWithViews();
 
@@ -81,6 +97,12 @@ builder.Services.AddSession(options =>
 });
 
 var app = builder.Build();
+
+if (app.Configuration.GetValue("Database:AplicarMigracionesAlIniciar", true))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<FinancieraContext>().Database.MigrateAsync();
+}
 
 await IdentitySeeder.SeedAsync(app.Services);
 

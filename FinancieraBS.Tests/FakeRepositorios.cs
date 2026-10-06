@@ -51,3 +51,39 @@ namespace FinancieraBS.Tests
         public Task<bool> TienePrestamosAsync(int clienteId) => Task.FromResult(ConPrestamos.Contains(clienteId));
     }
 }
+
+namespace FinancieraBS.Tests
+{
+    internal class FakeDocumentoRepository : IDocumentoRepository
+    {
+        public List<Documento> Documentos { get; } = new();
+
+        public Task<Documento> CreateAsync(Documento documento)
+        {
+            documento.Id = Documentos.Count == 0 ? 1 : Documentos.Max(d => d.Id) + 1;
+            Documentos.Add(documento);
+            return Task.FromResult(documento);
+        }
+        public Task<Documento?> GetByIdAsync(int id) => Task.FromResult(Documentos.FirstOrDefault(d => d.Id == id));
+        public Task<List<Documento>> GetByClienteIdAsync(int clienteId) => Task.FromResult(Documentos.Where(d => d.ClienteId == clienteId).ToList());
+        public Task<List<Documento>> GetByPrestamoIdAsync(int prestamoId) => Task.FromResult(Documentos.Where(d => d.PrestamoId == prestamoId).ToList());
+        public Task<bool> DeleteAsync(int id) => Task.FromResult(Documentos.RemoveAll(d => d.Id == id) > 0);
+    }
+
+    internal class FakeDocumentoStorage : IDocumentoStorage
+    {
+        public Dictionary<string, byte[]> Archivos { get; } = new();
+
+        public async Task<string> GuardarAsync(Stream contenido, string carpeta, string extension)
+        {
+            using var ms = new MemoryStream();
+            await contenido.CopyToAsync(ms);
+            var ruta = $"{carpeta}/{Guid.NewGuid():N}{extension}";
+            Archivos[ruta] = ms.ToArray();
+            return ruta;
+        }
+        public Task<Stream?> AbrirAsync(string ruta) =>
+            Task.FromResult<Stream?>(Archivos.TryGetValue(ruta, out var b) ? new MemoryStream(b) : null);
+        public Task EliminarAsync(string ruta) { Archivos.Remove(ruta); return Task.CompletedTask; }
+    }
+}

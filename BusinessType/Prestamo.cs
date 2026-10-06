@@ -46,5 +46,6 @@ namespace BusinessType
         public Usuario? Usuario { get; set; }
 
         public ICollection<Pago> Pagos { get; set; } = new List<Pago>();
+        public ICollection<Documento> Documentos { get; set; } = new List<Documento>();
     }
 }

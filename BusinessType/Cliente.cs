@@ -29,10 +29,6 @@ namespace BusinessType
         [StringLength(100)]
         public string Email { get; set; } = string.Empty;
 
-        public string? PagarePath { get; set; }
-        public string? InePath { get; set; }
-        public string? ComprobanteDomicilioPath { get; set; }
-
         [Required]
         [StringLength(20)]
         public string Estatus { get; set; } = "Activo";
@@ -41,6 +37,7 @@ namespace BusinessType
         public Usuario? Usuario { get; set; }
 
         public ICollection<Prestamo> Prestamos { get; set; } = new List<Prestamo>();
+        public ICollection<Documento> Documentos { get; set; } = new List<Documento>();
 
         public string NombreCompleto => $"{Nombre} {Apellidos}";
     }

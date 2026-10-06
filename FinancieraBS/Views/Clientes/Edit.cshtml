@@ -7,7 +7,7 @@
 <div class="container mt-4">
     <h2>Editar Cliente</h2>
     
-    <form asp-action="Edit" method="post" enctype="multipart/form-data" class="mt-4">
+    <form asp-action="Edit" method="post" class="mt-4">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         <input type="hidden" asp-for="Id" />
         
@@ -41,15 +41,6 @@
         </div>
 
         <div class="mb-3">
-            <label for="comprobanteDomicilioFile" class="form-label">Comprobante de Domicilio</label>
-            <input type="file" name="comprobanteDomicilioFile" id="comprobanteDomicilioFile" class="form-control" accept="image/*,.pdf" />
-            @if (!string.IsNullOrEmpty(Model.ComprobanteDomicilioPath))
-            {
-                <small class="text-muted">Archivo actual: <a href="@Model.ComprobanteDomicilioPath" target="_blank">Ver</a></small>
-            }
-        </div>
-
-        <div class="mb-3">
             <label asp-for="Estatus" class="form-label">Estatus</label>
             <select asp-for="Estatus" class="form-select">
                 <option value="Activo">Activo</option>
@@ -62,4 +53,10 @@
             <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
+
+    <partial name="_Documentos" model="ViewBag.Documentos" />
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

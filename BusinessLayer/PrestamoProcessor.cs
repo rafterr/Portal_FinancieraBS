@@ -9,12 +9,17 @@ namespace BusinessLayer
         private readonly IPrestamoRepository _prestamoRepository;
         private readonly IpagoRepository _pagoRepository;
         private readonly IClienteRepository _clienteRepository;
+        private readonly IDocumentoRepository _documentoRepository;
+        private readonly IDocumentoStorage _documentoStorage;
 
-        public PrestamoProcessor(IPrestamoRepository prestamoRepository, IpagoRepository pagoRepository, IClienteRepository clienteRepository)
+        public PrestamoProcessor(IPrestamoRepository prestamoRepository, IpagoRepository pagoRepository, IClienteRepository clienteRepository,
+            IDocumentoRepository documentoRepository, IDocumentoStorage documentoStorage)
         {
             _prestamoRepository = prestamoRepository;
             _pagoRepository = pagoRepository;
             _clienteRepository = clienteRepository;
+            _documentoRepository = documentoRepository;
+            _documentoStorage = documentoStorage;
         }
 
         public async Task<Prestamo?> GetByIdAsync(int id)
@@ -48,8 +53,13 @@ namespace BusinessLayer
             var pagos = await _pagoRepository.GetByPrestamoIdAsync(prestamo.Id);
             var totalPagado = pagos.Sum(p => p.MontoPago);
 
-            if (pagos.Count > 0 && prestamo.ClienteId != existente.ClienteId)
-                return ResultadoOperacion.Falla("No se puede cambiar el cliente de un préstamo que ya tiene pagos.");
+            if (prestamo.ClienteId != existente.ClienteId)
+            {
+                if (pagos.Count > 0)
+                    return ResultadoOperacion.Falla("No se puede cambiar el cliente de un préstamo que ya tiene pagos.");
+                if ((await _documentoRepository.GetByPrestamoIdAsync(prestamo.Id)).Count > 0)
+                    return ResultadoOperacion.Falla("No se puede cambiar el cliente de un préstamo con documentos; elimínelos primero.");
+            }
             if (await _clienteRepository.GetByIdAsync(prestamo.ClienteId) == null)
                 return ResultadoOperacion.Falla("El cliente no existe.");
 
@@ -74,9 +84,14 @@ namespace BusinessLayer
             if ((await _pagoRepository.GetByPrestamoIdAsync(id)).Count > 0)
                 return ResultadoOperacion.Falla("No se puede eliminar un préstamo con pagos registrados.");
 
-            return await _prestamoRepository.DeleteAsync(id)
-                ? ResultadoOperacion.Ok()
-                : ResultadoOperacion.Falla("El préstamo no existe.");
+            var documentos = await _documentoRepository.GetByPrestamoIdAsync(id);
+            if (!await _prestamoRepository.DeleteAsync(id))
+                return ResultadoOperacion.Falla("El préstamo no existe.");
+
+            // Los registros se borran en cascada; aquí se eliminan los archivos
+            foreach (var documento in documentos)
+                await _documentoStorage.EliminarAsync(documento.Ruta);
+            return ResultadoOperacion.Ok();
         }
     }
 }

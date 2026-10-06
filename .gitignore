@@ -433,3 +433,4 @@ appsettings.Local.json
 
 # Documentos subidos por los usuarios
 **/App_Data/documentos/
+**/App_Data/keys/

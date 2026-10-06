@@ -11,6 +11,7 @@ namespace BusinessType
         public DbSet<Cliente> Clientes { get; set; } = null!;
         public DbSet<Prestamo> Prestamos { get; set; } = null!;
         public DbSet<Pago> Pagos { get; set; } = null!;
+        public DbSet<Documento> Documentos { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +48,25 @@ namespace BusinessType
                 .WithMany()
                 .HasForeignKey(p => p.ClienteId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Los registros de documentos se van con su cliente/préstamo; los archivos los borra DocumentoProcessor
+            modelBuilder.Entity<Documento>()
+                .HasOne(d => d.Cliente)
+                .WithMany(c => c.Documentos)
+                .HasForeignKey(d => d.ClienteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Documento>()
+                .HasOne(d => d.Prestamo)
+                .WithMany(p => p.Documentos)
+                .HasForeignKey(d => d.PrestamoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Documento>()
+                .HasOne(d => d.Usuario)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Prestamo>().Property(p => p.MontoSolicitado).HasPrecision(18, 2);
             modelBuilder.Entity<Prestamo>().Property(p => p.SaldoRestante).HasPrecision(18, 2);

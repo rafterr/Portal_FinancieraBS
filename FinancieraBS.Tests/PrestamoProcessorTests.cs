@@ -12,7 +12,7 @@ namespace FinancieraBS.Tests
 
         public PrestamoProcessorTests()
         {
-            _processor = new PrestamoProcessor(_prestamos, _pagos, _clientes);
+            _processor = new PrestamoProcessor(_prestamos, _pagos, _clientes, new FakeDocumentoRepository(), new FakeDocumentoStorage());
         }
 
         [Fact]
