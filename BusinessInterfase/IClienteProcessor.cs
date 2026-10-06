@@ -1,18 +1,13 @@
-﻿using BusinessType;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using BusinessType;
 
 namespace BusinessInterfase
 {
     public interface IClienteProcessor
     {
-            Task<Cliente> CreateAsync(Cliente cliente);
-            Task<Cliente?> GetByIdAsync(int id);
-            Task<List<Cliente>> GetAllAsync();
-            Task<bool> UpdateAsync(Cliente cliente);
-            Task<bool> DeleteAsync(int id);
+        Task<Cliente?> GetByIdAsync(int id);
+        Task<List<Cliente>> GetAllAsync();
+        Task<Cliente> CrearAsync(Cliente cliente, string? usuarioId);
+        Task<ResultadoOperacion> ActualizarAsync(Cliente cliente);
+        Task<ResultadoOperacion> EliminarAsync(int id);
     }
 }

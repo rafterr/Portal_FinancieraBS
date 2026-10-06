@@ -1,6 +1,7 @@
 using BusinessInterfase;
 using BusinessType;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -11,13 +12,13 @@ namespace FinancieraBS.Controllers
     {
         private readonly IPagoProcessor _pagoProcessor;
         private readonly IPrestamoProcessor _prestamoProcessor;
-        private readonly IClienteProcessor _clienteProcessor;
+        private readonly UserManager<Usuario> _userManager;
 
-        public PagosController(IPagoProcessor pagoProcessor, IPrestamoProcessor prestamoProcessor, IClienteProcessor clienteProcessor)
+        public PagosController(IPagoProcessor pagoProcessor, IPrestamoProcessor prestamoProcessor, UserManager<Usuario> userManager)
         {
             _pagoProcessor = pagoProcessor;
             _prestamoProcessor = prestamoProcessor;
-            _clienteProcessor = clienteProcessor;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -26,14 +27,10 @@ namespace FinancieraBS.Controllers
             return View(pagos);
         }
 
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int? prestamoId)
         {
-            var prestamos = await _prestamoProcessor.GetAllAsync();
-            var clientes = await _clienteProcessor.GetAllAsync();
-            
-            ViewBag.Prestamos = new SelectList(prestamos, "Id", "Id");
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre");
-            return View();
+            await CargarPrestamosAsync(prestamoId, soloActivos: true);
+            return View(new Pago { PrestamoId = prestamoId ?? 0 });
         }
 
         [HttpPost]
@@ -43,27 +40,13 @@ namespace FinancieraBS.Controllers
             if (ModelState.IsValid)
             {
                 pago.FechaPago = DateTime.Now;
-                await _pagoProcessor.CreateAsync(pago);
-
-                var prestamo = await _prestamoProcessor.GetByIdAsync(pago.PrestamoId);
-                if (prestamo != null)
-                {
-                    prestamo.SaldoRestante -= pago.MontoPago;
-                    if (prestamo.SaldoRestante <= 0)
-                    {
-                        prestamo.Estatus = EstatusPrestamo.Pagado;
-                        prestamo.SaldoRestante = 0;
-                    }
-                    await _prestamoProcessor.UpdateAsync(prestamo);
-                }
-
-                return RedirectToAction(nameof(Index));
+                var resultado = await _pagoProcessor.RegistrarAsync(pago, _userManager.GetUserId(User));
+                if (resultado.Exito)
+                    return RedirectToAction(nameof(Index));
+                ModelState.AddModelError(string.Empty, resultado.Error!);
             }
 
-            var prestamos = await _prestamoProcessor.GetAllAsync();
-            var clientes = await _clienteProcessor.GetAllAsync();
-            ViewBag.Prestamos = new SelectList(prestamos, "Id", "Id");
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre");
+            await CargarPrestamosAsync(pago.PrestamoId, soloActivos: true);
             return View(pago);
         }
 
@@ -72,10 +55,7 @@ namespace FinancieraBS.Controllers
             var pago = await _pagoProcessor.GetByIdAsync(id);
             if (pago == null) return NotFound();
 
-            var prestamos = await _prestamoProcessor.GetAllAsync();
-            var clientes = await _clienteProcessor.GetAllAsync();
-            ViewBag.Prestamos = new SelectList(prestamos, "Id", "Id", pago.PrestamoId);
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre", pago.ClienteId);
+            await CargarPrestamosAsync(pago.PrestamoId, soloActivos: false);
             return View(pago);
         }
 
@@ -85,14 +65,13 @@ namespace FinancieraBS.Controllers
         {
             if (ModelState.IsValid)
             {
-                await _pagoProcessor.UpdateAsync(pago);
-                return RedirectToAction(nameof(Index));
+                var resultado = await _pagoProcessor.ActualizarAsync(pago);
+                if (resultado.Exito)
+                    return RedirectToAction(nameof(Index));
+                ModelState.AddModelError(string.Empty, resultado.Error!);
             }
 
-            var prestamos = await _prestamoProcessor.GetAllAsync();
-            var clientes = await _clienteProcessor.GetAllAsync();
-            ViewBag.Prestamos = new SelectList(prestamos, "Id", "Id", pago.PrestamoId);
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre", pago.ClienteId);
+            await CargarPrestamosAsync(pago.PrestamoId, soloActivos: false);
             return View(pago);
         }
 
@@ -107,8 +86,22 @@ namespace FinancieraBS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _pagoProcessor.DeleteAsync(id);
+            var resultado = await _pagoProcessor.EliminarAsync(id);
+            if (!resultado.Exito) TempData["Error"] = resultado.Error;
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task CargarPrestamosAsync(int? seleccionado, bool soloActivos)
+        {
+            var prestamos = (await _prestamoProcessor.GetAllAsync())
+                .Where(p => !soloActivos || p.Estatus != EstatusPrestamo.Pagado || p.Id == seleccionado)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = $"#{p.Id} – {p.Cliente?.NombreCompleto} – Saldo ${p.SaldoRestante:N2}",
+                    Selected = p.Id == seleccionado
+                });
+            ViewBag.Prestamos = prestamos.ToList();
         }
     }
 }

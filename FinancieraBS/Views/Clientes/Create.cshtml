@@ -8,6 +8,7 @@
     <h2>Nuevo Cliente</h2>
     
     <form asp-action="Create" method="post" enctype="multipart/form-data" class="mt-4">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label asp-for="Nombre" class="form-label">Nombre</label>

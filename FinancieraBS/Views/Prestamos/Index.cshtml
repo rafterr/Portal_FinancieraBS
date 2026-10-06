@@ -21,6 +21,7 @@
                     <th>Total</th>
                     <th>Saldo</th>
                     <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
                     <th>Estatus</th>
                     <th>Acciones</th>
                 </tr>
@@ -30,12 +31,13 @@
                 {
                     <tr>
                         <td>@prestamo.Id</td>
-                        <td>@(prestamo.Cliente?.Nombre ?? "N/A")</td>
+                        <td>@(prestamo.Cliente?.NombreCompleto ?? "N/A")</td>
                         <td>$@prestamo.MontoSolicitado.ToString("N2")</td>
                         <td>@prestamo.Interes%</td>
                         <td>$@prestamo.Total.ToString("N2")</td>
                         <td>$@prestamo.SaldoRestante.ToString("N2")</td>
                         <td>@prestamo.FechaInicio.ToString("dd/MM/yyyy")</td>
+                        <td>@prestamo.FechaFin.ToString("dd/MM/yyyy")</td>
                         <td>
                             @{
                                 var badgeClass = prestamo.Estatus switch
@@ -46,9 +48,13 @@
                                     _ => "secondary"
                                 };
                             }
-                            <span class="badge bg-@badgeClass">@prestamo.Estatus</span>
+                            <span class="badge bg-@badgeClass">@Html.DisplayFor(_ => prestamo.Estatus)</span>
                         </td>
                         <td>
+                            @if (prestamo.Estatus != BusinessType.EstatusPrestamo.Pagado)
+                            {
+                                <a asp-controller="Pagos" asp-action="Create" asp-route-prestamoId="@prestamo.Id" class="btn btn-sm btn-success">Pagar</a>
+                            }
                             <a asp-action="Edit" asp-route-id="@prestamo.Id" class="btn btn-sm btn-warning">Editar</a>
                             <a asp-action="Delete" asp-route-id="@prestamo.Id" class="btn btn-sm btn-danger">Eliminar</a>
                         </td>

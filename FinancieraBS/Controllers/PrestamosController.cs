@@ -2,6 +2,7 @@ using BusinessInterfase;
 using BusinessType;
 using FinancieraBS.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -13,12 +14,14 @@ namespace FinancieraBS.Controllers
         private readonly IPrestamoProcessor _prestamoProcessor;
         private readonly IClienteProcessor _clienteProcessor;
         private readonly IFirebaseStorageService _firebaseStorage;
+        private readonly UserManager<Usuario> _userManager;
 
-        public PrestamosController(IPrestamoProcessor prestamoProcessor, IClienteProcessor clienteProcessor, IFirebaseStorageService firebaseStorage)
+        public PrestamosController(IPrestamoProcessor prestamoProcessor, IClienteProcessor clienteProcessor, IFirebaseStorageService firebaseStorage, UserManager<Usuario> userManager)
         {
             _prestamoProcessor = prestamoProcessor;
             _clienteProcessor = clienteProcessor;
             _firebaseStorage = firebaseStorage;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -29,9 +32,8 @@ namespace FinancieraBS.Controllers
 
         public async Task<IActionResult> Create()
         {
-            var clientes = await _clienteProcessor.GetAllAsync();
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre");
-            return View();
+            await CargarClientesAsync(null);
+            return View(new Prestamo());
         }
 
         [HttpPost]
@@ -40,33 +42,24 @@ namespace FinancieraBS.Controllers
         {
             if (ModelState.IsValid)
             {
-                var cliente = await _clienteProcessor.GetByIdAsync(prestamo.ClienteId);
-                
-                if (cliente != null)
+                var resultado = await _prestamoProcessor.CrearAsync(prestamo, _userManager.GetUserId(User));
+                if (resultado.Exito)
                 {
-                    if (pagareFile != null)
+                    var cliente = await _clienteProcessor.GetByIdAsync(prestamo.ClienteId);
+                    if (cliente != null && (pagareFile != null || ineFile != null))
                     {
-                        var pagareUrl = await _firebaseStorage.UploadFileAsync(pagareFile, "pagares", $"{Guid.NewGuid()}_{pagareFile.FileName}");
-                        cliente.PagarePath = pagareUrl;
+                        if (pagareFile != null)
+                            cliente.PagarePath = await _firebaseStorage.UploadFileAsync(pagareFile, "pagares", $"{Guid.NewGuid()}_{pagareFile.FileName}");
+                        if (ineFile != null)
+                            cliente.InePath = await _firebaseStorage.UploadFileAsync(ineFile, "ines", $"{Guid.NewGuid()}_{ineFile.FileName}");
+                        await _clienteProcessor.ActualizarAsync(cliente);
                     }
-
-                    if (ineFile != null)
-                    {
-                        var ineUrl = await _firebaseStorage.UploadFileAsync(ineFile, "ines", $"{Guid.NewGuid()}_{ineFile.FileName}");
-                        cliente.InePath = ineUrl;
-                    }
-
-                    await _clienteProcessor.UpdateAsync(cliente);
+                    return RedirectToAction(nameof(Index));
                 }
-
-                prestamo.SaldoRestante = prestamo.Total;
-                prestamo.Estatus = EstatusPrestamo.EnProceso;
-                await _prestamoProcessor.CreateAsync(prestamo);
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError(string.Empty, resultado.Error!);
             }
 
-            var clientes = await _clienteProcessor.GetAllAsync();
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre");
+            await CargarClientesAsync(prestamo.ClienteId);
             return View(prestamo);
         }
 
@@ -75,8 +68,7 @@ namespace FinancieraBS.Controllers
             var prestamo = await _prestamoProcessor.GetByIdAsync(id);
             if (prestamo == null) return NotFound();
 
-            var clientes = await _clienteProcessor.GetAllAsync();
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre", prestamo.ClienteId);
+            await CargarClientesAsync(prestamo.ClienteId);
             return View(prestamo);
         }
 
@@ -86,12 +78,13 @@ namespace FinancieraBS.Controllers
         {
             if (ModelState.IsValid)
             {
-                await _prestamoProcessor.UpdateAsync(prestamo);
-                return RedirectToAction(nameof(Index));
+                var resultado = await _prestamoProcessor.ActualizarAsync(prestamo);
+                if (resultado.Exito)
+                    return RedirectToAction(nameof(Index));
+                ModelState.AddModelError(string.Empty, resultado.Error!);
             }
 
-            var clientes = await _clienteProcessor.GetAllAsync();
-            ViewBag.Clientes = new SelectList(clientes, "Id", "Nombre", prestamo.ClienteId);
+            await CargarClientesAsync(prestamo.ClienteId);
             return View(prestamo);
         }
 
@@ -106,8 +99,15 @@ namespace FinancieraBS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _prestamoProcessor.DeleteAsync(id);
+            var resultado = await _prestamoProcessor.EliminarAsync(id);
+            if (!resultado.Exito) TempData["Error"] = resultado.Error;
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task CargarClientesAsync(int? seleccionado)
+        {
+            var clientes = await _clienteProcessor.GetAllAsync();
+            ViewBag.Clientes = new SelectList(clientes, nameof(Cliente.Id), nameof(Cliente.NombreCompleto), seleccionado);
         }
     }
 }

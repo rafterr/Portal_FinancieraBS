@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using BusinessType;
 using DataInterfase;
 
@@ -16,15 +16,8 @@ namespace DataLayer
         // Crear pago
         public async Task<Pago> CreateAsync(Pago pago)
         {
+            // El saldo del préstamo lo recalcula PagoProcessor
             _context.Pagos.Add(pago);
-
-            // Actualiza el saldo restante del préstamo relacionado
-            var prestamo = await _context.Prestamos.FindAsync(pago.PrestamoId);
-            if (prestamo != null)
-            {
-                prestamo.SaldoRestante -= pago.MontoPago;
-            }
-
             await _context.SaveChangesAsync();
             return pago;
         }
@@ -46,6 +39,7 @@ namespace DataLayer
                 .Include(p => p.Prestamo)
                 .Include(p => p.Cliente)
                 .Include(p => p.Usuario)
+                .OrderByDescending(p => p.FechaPago)
                 .ToListAsync();
         }
 

@@ -8,6 +8,7 @@
     <h2>Eliminar Pago</h2>
     <div class="alert alert-danger mt-4">
         <h4>¿Está seguro de eliminar este pago?</h4>
+        <p class="mb-0">El monto se devolverá al saldo del préstamo.</p>
     </div>
 
     <div class="card">
@@ -17,10 +18,10 @@
                 <dd class="col-sm-9">@Model.Id</dd>
 
                 <dt class="col-sm-3">Préstamo</dt>
-                <dd class="col-sm-9">@Model.PrestamoId</dd>
+                <dd class="col-sm-9">#@Model.PrestamoId</dd>
 
                 <dt class="col-sm-3">Cliente</dt>
-                <dd class="col-sm-9">@(Model.Cliente?.Nombre ?? "N/A")</dd>
+                <dd class="col-sm-9">@(Model.Cliente?.NombreCompleto ?? "N/A")</dd>
 
                 <dt class="col-sm-3">Monto</dt>
                 <dd class="col-sm-9">$@Model.MontoPago.ToString("N2")</dd>

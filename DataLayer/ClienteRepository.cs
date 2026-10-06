@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.EntityFrameworkCore;
 using BusinessType;
 using DataInterfase;
@@ -31,7 +31,7 @@ namespace DataLayer
         // Obtener todos los clientes
         public async Task<List<Cliente>> GetAllAsync()
         {
-            return await _context.Clientes.ToListAsync();
+            return await _context.Clientes.OrderBy(c => c.Nombre).ThenBy(c => c.Apellidos).ToListAsync();
         }
 
         // Actualizar cliente
@@ -43,6 +43,11 @@ namespace DataLayer
             _context.Entry(existing).CurrentValues.SetValues(cliente);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> TienePrestamosAsync(int clienteId)
+        {
+            return await _context.Prestamos.AnyAsync(p => p.ClienteId == clienteId);
         }
 
         // Eliminar cliente

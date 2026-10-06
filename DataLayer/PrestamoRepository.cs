@@ -1,4 +1,4 @@
-﻿using BusinessType;
+using BusinessType;
 using DataInterfase;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +39,7 @@ namespace DataLayer
                 .Include(p => p.Cliente)
                 .Include(p => p.Usuario)
                 .Include(p => p.Pagos)
+                .OrderByDescending(p => p.FechaInicio)
                 .ToListAsync();
         }
 

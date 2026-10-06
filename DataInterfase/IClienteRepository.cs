@@ -1,4 +1,4 @@
-﻿
+
 
 
 namespace DataInterfase
@@ -15,5 +15,7 @@ namespace DataInterfase
         Task<bool> UpdateAsync(BusinessType.Cliente cliente);
         // Eliminar cliente
         Task<bool> DeleteAsync(int id);
+        // Indica si el cliente tiene préstamos
+        Task<bool> TienePrestamosAsync(int clienteId);
     }
 }

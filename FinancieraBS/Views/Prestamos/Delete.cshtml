@@ -17,7 +17,7 @@
                 <dd class="col-sm-9">@Model.Id</dd>
 
                 <dt class="col-sm-3">Cliente</dt>
-                <dd class="col-sm-9">@(Model.Cliente?.Nombre ?? "N/A")</dd>
+                <dd class="col-sm-9">@(Model.Cliente?.NombreCompleto ?? "N/A")</dd>
 
                 <dt class="col-sm-3">Monto Solicitado</dt>
                 <dd class="col-sm-9">$@Model.MontoSolicitado.ToString("N2")</dd>
@@ -35,7 +35,7 @@
                 <dd class="col-sm-9">@Model.FechaInicio.ToString("dd/MM/yyyy")</dd>
 
                 <dt class="col-sm-3">Estatus</dt>
-                <dd class="col-sm-9">@Model.Estatus</dd>
+                <dd class="col-sm-9">@Html.DisplayFor(m => m.Estatus)</dd>
             </dl>
         </div>
     </div>

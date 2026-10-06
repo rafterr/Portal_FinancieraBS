@@ -2,6 +2,7 @@ using BusinessInterfase;
 using BusinessType;
 using FinancieraBS.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinancieraBS.Controllers
@@ -11,11 +12,13 @@ namespace FinancieraBS.Controllers
     {
         private readonly IClienteProcessor _clienteProcessor;
         private readonly IFirebaseStorageService _firebaseStorage;
+        private readonly UserManager<Usuario> _userManager;
 
-        public ClientesController(IClienteProcessor clienteProcessor, IFirebaseStorageService firebaseStorage)
+        public ClientesController(IClienteProcessor clienteProcessor, IFirebaseStorageService firebaseStorage, UserManager<Usuario> userManager)
         {
             _clienteProcessor = clienteProcessor;
             _firebaseStorage = firebaseStorage;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -41,7 +44,7 @@ namespace FinancieraBS.Controllers
                     cliente.ComprobanteDomicilioPath = comprobanteUrl;
                 }
 
-                await _clienteProcessor.CreateAsync(cliente);
+                await _clienteProcessor.CrearAsync(cliente, _userManager.GetUserId(User));
                 return RedirectToAction(nameof(Index));
             }
             return View(cliente);
@@ -62,15 +65,18 @@ namespace FinancieraBS.Controllers
             {
                 if (comprobanteDomicilioFile != null)
                 {
-                    if (!string.IsNullOrEmpty(cliente.ComprobanteDomicilioPath))
-                        await _firebaseStorage.DeleteFileAsync(cliente.ComprobanteDomicilioPath);
-                    
+                    var actual = await _clienteProcessor.GetByIdAsync(cliente.Id);
+                    if (!string.IsNullOrEmpty(actual?.ComprobanteDomicilioPath))
+                        await _firebaseStorage.DeleteFileAsync(actual.ComprobanteDomicilioPath);
+
                     var comprobanteUrl = await _firebaseStorage.UploadFileAsync(comprobanteDomicilioFile, "comprobantes", $"{Guid.NewGuid()}_{comprobanteDomicilioFile.FileName}");
                     cliente.ComprobanteDomicilioPath = comprobanteUrl;
                 }
 
-                await _clienteProcessor.UpdateAsync(cliente);
-                return RedirectToAction(nameof(Index));
+                var resultado = await _clienteProcessor.ActualizarAsync(cliente);
+                if (resultado.Exito)
+                    return RedirectToAction(nameof(Index));
+                ModelState.AddModelError(string.Empty, resultado.Error!);
             }
             return View(cliente);
         }
@@ -87,6 +93,13 @@ namespace FinancieraBS.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var cliente = await _clienteProcessor.GetByIdAsync(id);
+            var resultado = await _clienteProcessor.EliminarAsync(id);
+            if (!resultado.Exito)
+            {
+                TempData["Error"] = resultado.Error;
+                return RedirectToAction(nameof(Index));
+            }
+
             if (cliente != null)
             {
                 if (!string.IsNullOrEmpty(cliente.PagarePath))
@@ -96,8 +109,6 @@ namespace FinancieraBS.Controllers
                 if (!string.IsNullOrEmpty(cliente.ComprobanteDomicilioPath))
                     await _firebaseStorage.DeleteFileAsync(cliente.ComprobanteDomicilioPath);
             }
-
-            await _clienteProcessor.DeleteAsync(id);
             return RedirectToAction(nameof(Index));
         }
     }

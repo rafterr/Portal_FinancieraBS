@@ -19,6 +19,7 @@
                     <th>Cliente</th>
                     <th>Monto</th>
                     <th>Fecha</th>
+                    <th>Registró</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -27,10 +28,11 @@
                 {
                     <tr>
                         <td>@pago.Id</td>
-                        <td>@pago.PrestamoId</td>
-                        <td>@(pago.Cliente?.Nombre ?? "N/A")</td>
+                        <td>#@pago.PrestamoId</td>
+                        <td>@(pago.Cliente?.NombreCompleto ?? "N/A")</td>
                         <td>$@pago.MontoPago.ToString("N2")</td>
                         <td>@pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(pago.Usuario?.Email ?? "—")</td>
                         <td>
                             <a asp-action="Edit" asp-route-id="@pago.Id" class="btn btn-sm btn-warning">Editar</a>
                             <a asp-action="Delete" asp-route-id="@pago.Id" class="btn btn-sm btn-danger">Eliminar</a>
