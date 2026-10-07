@@ -66,10 +66,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccesoDenegado";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.Cookie.HttpOnly = true;
-    // En producción la cookie solo viaja por HTTPS; en local se permite el perfil http
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-        ? CookieSecurePolicy.SameAsRequest
-        : CookieSecurePolicy.Always;
+    // Secure cuando la petición llega por HTTPS. Con "Always" el navegador descarta la cookie
+    // si el sitio se abre por http:// y el login regresa a la misma página sin ningún mensaje.
+    // Para forzar HTTPS active el certificado SSL del hosting (UseHttpsRedirection redirige solo).
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     options.SlidingExpiration = true;
 });
 
