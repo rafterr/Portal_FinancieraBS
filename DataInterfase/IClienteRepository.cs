@@ -15,6 +15,8 @@ namespace DataInterfase
         Task<bool> UpdateAsync(BusinessType.Cliente cliente);
         // Eliminar cliente
         Task<bool> DeleteAsync(int id);
+        // Buscar por nombre, apellidos, teléfono o correo
+        Task<List<BusinessType.Cliente>> BuscarAsync(string? texto);
         // Indica si el cliente tiene préstamos
         Task<bool> TienePrestamosAsync(int clienteId);
     }

@@ -32,6 +32,20 @@ namespace BusinessLayer
             return await _prestamoRepository.GetAllAsync();
         }
 
+        public async Task<List<Prestamo>> BuscarAsync(int? clienteId, string? texto, EstatusPrestamo? estatus)
+        {
+            return await _prestamoRepository.BuscarAsync(clienteId, texto, estatus);
+        }
+
+        public async Task<HistorialPrestamo?> ObtenerHistorialAsync(int id)
+        {
+            var prestamo = await _prestamoRepository.GetByIdAsync(id);
+            if (prestamo == null) return null;
+
+            var pagos = await _pagoRepository.GetByPrestamoIdAsync(id);
+            return SaldoPrestamo.Historial(prestamo, pagos);
+        }
+
         public async Task<ResultadoOperacion> CrearAsync(Prestamo prestamo, string? usuarioId)
         {
             if (await _clienteRepository.GetByIdAsync(prestamo.ClienteId) == null)

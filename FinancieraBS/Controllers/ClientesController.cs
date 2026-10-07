@@ -21,10 +21,13 @@ namespace FinancieraBS.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? q)
         {
-            var clientes = await _clienteProcessor.GetAllAsync();
-            return View(clientes);
+            return View(new ClientesIndexViewModel
+            {
+                Clientes = await _clienteProcessor.BuscarAsync(q),
+                Q = q
+            });
         }
 
         public IActionResult Create()

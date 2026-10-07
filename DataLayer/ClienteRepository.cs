@@ -45,6 +45,15 @@ namespace DataLayer
             return true;
         }
 
+        public async Task<List<Cliente>> BuscarAsync(string? texto)
+        {
+            var query = _context.Clientes.Include(c => c.Prestamos).AsQueryable();
+            foreach (var t in Busqueda.Terminos(texto))
+                query = query.Where(c => c.Nombre.Contains(t) || c.Apellidos.Contains(t) || c.Telefono.Contains(t) || c.Email.Contains(t));
+
+            return await query.OrderBy(c => c.Nombre).ThenBy(c => c.Apellidos).ToListAsync();
+        }
+
         public async Task<bool> TienePrestamosAsync(int clienteId)
         {
             return await _context.Prestamos.AnyAsync(p => p.ClienteId == clienteId);

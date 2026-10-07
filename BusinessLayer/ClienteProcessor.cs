@@ -27,6 +27,11 @@ namespace BusinessLayer
             return await _clienteRepository.GetAllAsync();
         }
 
+        public async Task<List<Cliente>> BuscarAsync(string? texto)
+        {
+            return await _clienteRepository.BuscarAsync(texto);
+        }
+
         public async Task<Cliente> CrearAsync(Cliente cliente, string? usuarioId)
         {
             cliente.UsuarioId = usuarioId;

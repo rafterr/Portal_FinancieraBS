@@ -6,6 +6,7 @@ namespace BusinessInterfase
     {
         Task<Cliente?> GetByIdAsync(int id);
         Task<List<Cliente>> GetAllAsync();
+        Task<List<Cliente>> BuscarAsync(string? texto);
         Task<Cliente> CrearAsync(Cliente cliente, string? usuarioId);
         Task<ResultadoOperacion> ActualizarAsync(Cliente cliente);
         Task<ResultadoOperacion> EliminarAsync(int id);

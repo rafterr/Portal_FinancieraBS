@@ -1,4 +1,4 @@
-﻿using BusinessType;
+using BusinessType;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +23,9 @@ namespace DataInterfase
         // Obtener pagos por cliente
         Task<List<Pago>> GetByClienteIdAsync(int clienteId);
         
+        // Filtra por préstamo, texto (#préstamo o datos del cliente) y rango de fechas (inclusivo)
+        Task<List<Pago>> BuscarAsync(int? prestamoId, string? texto, DateTime? desde, DateTime? hasta);
+
         // Obtener pagos por préstamo
         Task<List<Pago>> GetByPrestamoIdAsync(int prestamoId);
     }

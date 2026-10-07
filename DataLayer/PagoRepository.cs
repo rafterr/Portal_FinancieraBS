@@ -76,6 +76,32 @@ namespace DataLayer
                 .ToListAsync();
         }
 
+        public async Task<List<Pago>> BuscarAsync(int? prestamoId, string? texto, DateTime? desde, DateTime? hasta)
+        {
+            var query = _context.Pagos
+                .Include(p => p.Prestamo)
+                .Include(p => p.Cliente)
+                .Include(p => p.Usuario)
+                .AsQueryable();
+
+            if (prestamoId.HasValue) query = query.Where(p => p.PrestamoId == prestamoId);
+            if (desde.HasValue) query = query.Where(p => p.FechaPago >= desde.Value.Date);
+            if (hasta.HasValue)
+            {
+                var limite = hasta.Value.Date.AddDays(1);
+                query = query.Where(p => p.FechaPago < limite);
+            }
+
+            foreach (var t in Busqueda.Terminos(texto))
+            {
+                var id = Busqueda.ComoId(t);
+                query = query.Where(p => p.PrestamoId == id || p.Cliente!.Nombre.Contains(t) || p.Cliente.Apellidos.Contains(t)
+                                         || p.Cliente.Telefono.Contains(t) || p.Cliente.Email.Contains(t));
+            }
+
+            return await query.OrderByDescending(p => p.FechaPago).ThenByDescending(p => p.Id).ToListAsync();
+        }
+
         // Obtener pagos por préstamo
         public async Task<List<Pago>> GetByPrestamoIdAsync(int prestamoId)
         {

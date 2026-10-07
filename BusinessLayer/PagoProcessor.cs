@@ -25,6 +25,11 @@ namespace BusinessLayer
             return await _pagoRepository.GetAllAsync();
         }
 
+        public async Task<List<Pago>> BuscarAsync(int? prestamoId, string? texto, DateTime? desde, DateTime? hasta)
+        {
+            return await _pagoRepository.BuscarAsync(prestamoId, texto, desde, hasta);
+        }
+
         public async Task<ResultadoOperacion> RegistrarAsync(Pago pago, string? usuarioId)
         {
             var prestamo = await _prestamoRepository.GetByIdAsync(pago.PrestamoId);

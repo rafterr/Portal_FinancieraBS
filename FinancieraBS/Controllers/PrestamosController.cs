@@ -24,16 +24,33 @@ namespace FinancieraBS.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? clienteId, string? q, EstatusPrestamo? estatus)
         {
-            var prestamos = await _prestamoProcessor.GetAllAsync();
-            return View(prestamos);
+            var model = new PrestamosIndexViewModel
+            {
+                Prestamos = await _prestamoProcessor.BuscarAsync(clienteId, q, estatus),
+                Q = q,
+                Estatus = estatus,
+                ClienteId = clienteId
+            };
+            if (clienteId.HasValue)
+                model.ClienteNombre = (await _clienteProcessor.GetByIdAsync(clienteId.Value))?.NombreCompleto;
+            return View(model);
         }
 
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Detalle(int id)
         {
-            await CargarClientesAsync(null);
-            return View(new Prestamo());
+            var historial = await _prestamoProcessor.ObtenerHistorialAsync(id);
+            if (historial == null) return NotFound();
+
+            await CargarDocumentosAsync(historial.Prestamo, Url.Action(nameof(Detalle), new { id })!);
+            return View(historial);
+        }
+
+        public async Task<IActionResult> Create(int? clienteId)
+        {
+            await CargarClientesAsync(clienteId);
+            return View(new Prestamo { ClienteId = clienteId ?? 0 });
         }
 
         [HttpPost]
@@ -64,7 +81,7 @@ namespace FinancieraBS.Controllers
                     }
 
                     if (errores.Count == 0)
-                        return RedirectToAction(nameof(Index));
+                        return RedirectToAction(nameof(Detalle), new { id = prestamo.Id });
 
                     TempData["Error"] = "El préstamo se guardó, pero hubo errores con los documentos: " + string.Join(" ", errores);
                     return RedirectToAction(nameof(Edit), new { id = prestamo.Id });
@@ -124,7 +141,7 @@ namespace FinancieraBS.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task CargarDocumentosAsync(Prestamo prestamo)
+        private async Task CargarDocumentosAsync(Prestamo prestamo, string? returnUrl = null)
         {
             ViewBag.Documentos = new DocumentosViewModel
             {
@@ -132,7 +149,7 @@ namespace FinancieraBS.Controllers
                 ClienteId = prestamo.ClienteId,
                 PrestamoId = prestamo.Id,
                 TiposPermitidos = new[] { TipoDocumento.Pagare, TipoDocumento.Ine },
-                ReturnUrl = Url.Action(nameof(Edit), new { id = prestamo.Id })!
+                ReturnUrl = returnUrl ?? Url.Action(nameof(Edit), new { id = prestamo.Id })!
             };
         }
 

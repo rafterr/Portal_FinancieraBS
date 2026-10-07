@@ -6,6 +6,8 @@ namespace BusinessInterfase
     {
         Task<Prestamo?> GetByIdAsync(int id);
         Task<List<Prestamo>> GetAllAsync();
+        Task<List<Prestamo>> BuscarAsync(int? clienteId, string? texto, EstatusPrestamo? estatus);
+        Task<HistorialPrestamo?> ObtenerHistorialAsync(int id);
         Task<ResultadoOperacion> CrearAsync(Prestamo prestamo, string? usuarioId);
         Task<ResultadoOperacion> ActualizarAsync(Prestamo prestamo);
         Task<ResultadoOperacion> EliminarAsync(int id);

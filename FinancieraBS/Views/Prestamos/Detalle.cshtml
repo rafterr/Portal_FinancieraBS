@@ -1,0 +1,123 @@
+@model BusinessInterfase.HistorialPrestamo
+
+@{
+    var p = Model.Prestamo;
+    ViewData["Title"] = $"Préstamo #{p.Id}";
+    var vencido = p.Estatus != BusinessType.EstatusPrestamo.Pagado && p.FechaFin.Date < DateTime.Today;
+}
+
+<div class="container mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="mb-0">Préstamo #@p.Id <partial name="_EstatusBadge" model="p.Estatus" /></h2>
+            <div class="text-muted">
+                <a asp-controller="Clientes" asp-action="Edit" asp-route-id="@p.ClienteId">@p.Cliente?.NombreCompleto</a>
+                @if (!string.IsNullOrEmpty(p.Cliente?.Telefono))
+                {
+                    <text> · <a href="tel:@p.Cliente.Telefono">@p.Cliente.Telefono</a></text>
+                }
+            </div>
+        </div>
+        <div class="text-nowrap">
+            @if (p.Estatus != BusinessType.EstatusPrestamo.Pagado)
+            {
+                <a asp-controller="Pagos" asp-action="Create" asp-route-prestamoId="@p.Id" class="btn btn-success">Registrar pago</a>
+            }
+            <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-warning">Editar</a>
+            <a asp-action="Index" asp-route-clienteId="@p.ClienteId" class="btn btn-secondary">Préstamos del cliente</a>
+        </div>
+    </div>
+
+    @if (vencido)
+    {
+        <div class="alert alert-warning">La fecha fin (@p.FechaFin.ToString("dd/MM/yyyy")) ya pasó y el préstamo tiene saldo pendiente.</div>
+    }
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="text-muted small">Monto solicitado</div>
+                <div class="fs-5 fw-semibold">$@p.MontoSolicitado.ToString("N2")</div>
+                <div class="text-muted small">Interés @p.Interes%</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="text-muted small">Total a pagar</div>
+                <div class="fs-5 fw-semibold">$@p.Total.ToString("N2")</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="text-muted small">Pagado</div>
+                <div class="fs-5 fw-semibold text-success">$@Model.TotalPagado.ToString("N2")</div>
+                <div class="text-muted small">@Model.Movimientos.Count pago(s)</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="text-muted small">Saldo restante</div>
+                <div class="fs-5 fw-semibold @(p.SaldoRestante > 0 ? "text-danger" : "text-success")">$@p.SaldoRestante.ToString("N2")</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="mb-1 d-flex justify-content-between small text-muted">
+        <span>Inicio @p.FechaInicio.ToString("dd/MM/yyyy")</span>
+        <span>@Model.PorcentajePagado% pagado</span>
+        <span>Fin @p.FechaFin.ToString("dd/MM/yyyy")</span>
+    </div>
+    <div class="progress mb-4" role="progressbar" aria-label="Avance de pago" aria-valuenow="@Model.PorcentajePagado" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar bg-success" style="width: @(Model.PorcentajePagado.ToString(System.Globalization.CultureInfo.InvariantCulture))%"></div>
+    </div>
+
+    <h4>Historial de pagos</h4>
+    @if (Model.Movimientos.Count == 0)
+    {
+        <div class="alert alert-light border">Este préstamo todavía no tiene pagos.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Fecha</th>
+                        <th class="text-end">Monto</th>
+                        <th class="text-end">Saldo después</th>
+                        <th>Registró</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var n = 1; }
+                    @foreach (var m in Model.Movimientos)
+                    {
+                        <tr>
+                            <td>@(n++)</td>
+                            <td>@m.Pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end">$@m.Pago.MontoPago.ToString("N2")</td>
+                            <td class="text-end">$@m.SaldoDespues.ToString("N2")</td>
+                            <td>@(m.Pago.Usuario?.Email ?? "—")</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-controller="Pagos" asp-action="Edit" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-warning">Editar</a>
+                                <a asp-controller="Pagos" asp-action="Delete" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-semibold">
+                        <td colspan="2">Total pagado</td>
+                        <td class="text-end">$@Model.TotalPagado.ToString("N2")</td>
+                        <td class="text-end">$@p.SaldoRestante.ToString("N2")</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+
+    <partial name="_Documentos" model="ViewBag.Documentos" />
+</div>

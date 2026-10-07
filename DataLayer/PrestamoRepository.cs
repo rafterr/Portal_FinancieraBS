@@ -43,6 +43,26 @@ namespace DataLayer
                 .ToListAsync();
         }
 
+        public async Task<List<Prestamo>> BuscarAsync(int? clienteId, string? texto, EstatusPrestamo? estatus)
+        {
+            var query = _context.Prestamos
+                .Include(p => p.Cliente)
+                .Include(p => p.Usuario)
+                .AsQueryable();
+
+            if (clienteId.HasValue) query = query.Where(p => p.ClienteId == clienteId);
+            if (estatus.HasValue) query = query.Where(p => p.Estatus == estatus);
+
+            foreach (var t in Busqueda.Terminos(texto))
+            {
+                var id = Busqueda.ComoId(t);
+                query = query.Where(p => p.Id == id || p.Cliente!.Nombre.Contains(t) || p.Cliente.Apellidos.Contains(t)
+                                         || p.Cliente.Telefono.Contains(t) || p.Cliente.Email.Contains(t));
+            }
+
+            return await query.OrderByDescending(p => p.FechaInicio).ThenByDescending(p => p.Id).ToListAsync();
+        }
+
         // Actualizar préstamo
         public async Task<bool> UpdateAsync(Prestamo prestamo)
         {

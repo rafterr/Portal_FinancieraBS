@@ -16,6 +16,8 @@ namespace FinancieraBS.Tests
         }
         public Task<Prestamo?> GetByIdAsync(int id) => Task.FromResult(Prestamos.FirstOrDefault(p => p.Id == id));
         public Task<List<Prestamo>> GetAllAsync() => Task.FromResult(Prestamos.ToList());
+        public Task<List<Prestamo>> BuscarAsync(int? clienteId, string? texto, EstatusPrestamo? estatus) =>
+            Task.FromResult(Prestamos.Where(p => (clienteId == null || p.ClienteId == clienteId) && (estatus == null || p.Estatus == estatus)).ToList());
         public Task<bool> UpdateAsync(Prestamo prestamo) => Task.FromResult(true);
         public Task<bool> DeleteAsync(int id) => Task.FromResult(Prestamos.RemoveAll(p => p.Id == id) > 0);
     }
@@ -34,6 +36,8 @@ namespace FinancieraBS.Tests
         public Task<List<Pago>> GetAllAsync() => Task.FromResult(Pagos.ToList());
         public Task<bool> UpdateAsync(Pago pago) => Task.FromResult(true);
         public Task<bool> DeleteAsync(int id) => Task.FromResult(Pagos.RemoveAll(p => p.Id == id) > 0);
+        public Task<List<Pago>> BuscarAsync(int? prestamoId, string? texto, DateTime? desde, DateTime? hasta) =>
+            Task.FromResult(Pagos.Where(p => prestamoId == null || p.PrestamoId == prestamoId).ToList());
         public Task<List<Pago>> GetByClienteIdAsync(int clienteId) => Task.FromResult(Pagos.Where(p => p.ClienteId == clienteId).ToList());
         public Task<List<Pago>> GetByPrestamoIdAsync(int prestamoId) => Task.FromResult(Pagos.Where(p => p.PrestamoId == prestamoId).ToList());
     }
@@ -48,6 +52,7 @@ namespace FinancieraBS.Tests
         public Task<List<Cliente>> GetAllAsync() => Task.FromResult(Clientes.ToList());
         public Task<bool> UpdateAsync(Cliente cliente) => Task.FromResult(true);
         public Task<bool> DeleteAsync(int id) => Task.FromResult(Clientes.RemoveAll(c => c.Id == id) > 0);
+        public Task<List<Cliente>> BuscarAsync(string? texto) => Task.FromResult(Clientes.ToList());
         public Task<bool> TienePrestamosAsync(int clienteId) => Task.FromResult(ConPrestamos.Contains(clienteId));
     }
 }

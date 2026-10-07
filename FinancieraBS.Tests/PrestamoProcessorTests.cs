@@ -55,3 +55,36 @@ namespace FinancieraBS.Tests
         }
     }
 }
+
+namespace FinancieraBS.Tests
+{
+    public class HistorialPrestamoTests
+    {
+        [Fact]
+        public void Historial_CalculaSaldoDespuesDeCadaPagoEnOrdenCronologico()
+        {
+            var prestamo = new Prestamo { Id = 1, MontoSolicitado = 1000, Interes = 20 }; // total 1200
+            var pagos = new[]
+            {
+                new Pago { Id = 2, MontoPago = 500, FechaPago = new DateTime(2026, 10, 8) },
+                new Pago { Id = 1, MontoPago = 200, FechaPago = new DateTime(2026, 10, 1) },
+            };
+
+            var historial = SaldoPrestamo.Historial(prestamo, pagos);
+
+            Assert.Equal(new[] { 1, 2 }, historial.Movimientos.Select(m => m.Pago.Id));
+            Assert.Equal(new[] { 1000m, 500m }, historial.Movimientos.Select(m => m.SaldoDespues));
+            Assert.Equal(700m, historial.TotalPagado);
+            Assert.Equal(58.3m, historial.PorcentajePagado);
+        }
+
+        [Fact]
+        public void Historial_SinPagos()
+        {
+            var historial = SaldoPrestamo.Historial(new Prestamo { MontoSolicitado = 100 }, Array.Empty<Pago>());
+
+            Assert.Empty(historial.Movimientos);
+            Assert.Equal(0m, historial.PorcentajePagado);
+        }
+    }
+}

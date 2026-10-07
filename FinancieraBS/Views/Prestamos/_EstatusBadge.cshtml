@@ -1,0 +1,11 @@
+@model BusinessType.EstatusPrestamo
+@{
+    var clase = Model switch
+    {
+        BusinessType.EstatusPrestamo.Pagado => "success",
+        BusinessType.EstatusPrestamo.EnProceso => "primary",
+        BusinessType.EstatusPrestamo.Retraso => "danger",
+        _ => "secondary"
+    };
+}
+<span class="badge bg-@clase">@Html.DisplayFor(m => m)</span>

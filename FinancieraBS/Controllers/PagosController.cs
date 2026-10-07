@@ -1,5 +1,6 @@
 using BusinessInterfase;
 using BusinessType;
+using FinancieraBS.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,31 +22,44 @@ namespace FinancieraBS.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? q, int? prestamoId, DateTime? desde, DateTime? hasta)
         {
-            var pagos = await _pagoProcessor.GetAllAsync();
-            return View(pagos);
+            return View(new PagosIndexViewModel
+            {
+                Pagos = await _pagoProcessor.BuscarAsync(prestamoId, q, desde, hasta),
+                Q = q,
+                PrestamoId = prestamoId,
+                Desde = desde,
+                Hasta = hasta
+            });
         }
 
         public async Task<IActionResult> Create(int? prestamoId)
         {
+            // Si se entra desde un préstamo, al guardar se regresa a su detalle
+            ViewBag.VolverADetalle = prestamoId.HasValue;
             await CargarPrestamosAsync(prestamoId, soloActivos: true);
             return View(new Pago { PrestamoId = prestamoId ?? 0 });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Pago pago)
+        public async Task<IActionResult> Create(Pago pago, bool volverADetalle = false)
         {
             if (ModelState.IsValid)
             {
                 pago.FechaPago = DateTime.Now;
                 var resultado = await _pagoProcessor.RegistrarAsync(pago, _userManager.GetUserId(User));
                 if (resultado.Exito)
-                    return RedirectToAction(nameof(Index));
+                {
+                    return volverADetalle
+                        ? RedirectToAction("Detalle", "Prestamos", new { id = pago.PrestamoId })
+                        : RedirectToAction(nameof(Index));
+                }
                 ModelState.AddModelError(string.Empty, resultado.Error!);
             }
 
+            ViewBag.VolverADetalle = volverADetalle;
             await CargarPrestamosAsync(pago.PrestamoId, soloActivos: true);
             return View(pago);
         }
