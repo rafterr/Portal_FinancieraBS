@@ -12,9 +12,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 // La cadena de conexión viene de User Secrets (local) o de appsettings.Production.json / variables
 // de entorno (hosting). Nunca se guarda en el repositorio.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        $"Falta la cadena de conexión 'ConnectionStrings:DefaultConnection' (entorno: {builder.Environment.EnvironmentName}). " +
+        "En local configúrela con User Secrets (clic derecho en el proyecto FinancieraBS > Administrar secretos de usuario, " +
+        "o 'dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"...\"' dentro de la carpeta FinancieraBS); " +
+        "los User Secrets solo se cargan con ASPNETCORE_ENVIRONMENT=Development. " +
+        "En el hosting use appsettings.Production.json o variables de entorno. Ver README.md.");
+}
+
 builder.Services.AddDbContext<FinancieraContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString,
         new MySqlServerVersion(new Version(8, 0, 25)),
         mySql => mySql.MigrationsAssembly("DataLayer")
     ));
