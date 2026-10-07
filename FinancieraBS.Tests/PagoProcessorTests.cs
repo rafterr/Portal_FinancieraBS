@@ -95,3 +95,33 @@ namespace FinancieraBS.Tests
         }
     }
 }
+
+namespace FinancieraBS.Tests
+{
+    public class ComprobantePagoTests
+    {
+        [Fact]
+        public async Task Comprobante_MuestraSaldoAnteriorYPosteriorDelAbono()
+        {
+            var prestamos = new FakePrestamoRepository();
+            var pagos = new FakePagoRepository();
+            var processor = new PagoProcessor(pagos, prestamos);
+            var prestamo = new Prestamo { MontoSolicitado = 1000, Interes = 20, ClienteId = 1 }; // total 1200
+            SaldoPrestamo.Recalcular(prestamo, 0);
+            await prestamos.CreateAsync(prestamo);
+
+            await processor.RegistrarAsync(new Pago { PrestamoId = prestamo.Id, MontoPago = 200, FechaPago = new DateTime(2026, 10, 1) }, null);
+            await processor.RegistrarAsync(new Pago { PrestamoId = prestamo.Id, MontoPago = 300, FechaPago = new DateTime(2026, 10, 8) }, null);
+
+            var comprobante = await processor.ObtenerComprobanteAsync(2);
+
+            Assert.NotNull(comprobante);
+            Assert.Equal("P-000002", comprobante!.Folio);
+            Assert.Equal(2, comprobante.NumeroPago);
+            Assert.Equal(1000m, comprobante.SaldoAnterior);
+            Assert.Equal(700m, comprobante.SaldoDespues);
+            Assert.Equal(500m, comprobante.PagadoAcumulado);
+            Assert.False(comprobante.Liquidado);
+        }
+    }
+}

@@ -30,6 +30,26 @@ namespace BusinessLayer
             return await _pagoRepository.BuscarAsync(prestamoId, texto, desde, hasta);
         }
 
+        public async Task<ComprobantePago?> ObtenerComprobanteAsync(int id)
+        {
+            var pago = await _pagoRepository.GetByIdAsync(id);
+            if (pago == null) return null;
+
+            var prestamo = await _prestamoRepository.GetByIdAsync(pago.PrestamoId);
+            if (prestamo == null) return null;
+
+            var historial = SaldoPrestamo.Historial(prestamo, await _pagoRepository.GetByPrestamoIdAsync(prestamo.Id));
+            var indice = historial.Movimientos.FindIndex(m => m.Pago.Id == id);
+            if (indice < 0) return null;
+
+            var movimiento = historial.Movimientos[indice];
+            var saldoAnterior = indice == 0 ? prestamo.Total : historial.Movimientos[indice - 1].SaldoDespues;
+            var acumulado = historial.Movimientos.Take(indice + 1).Sum(m => m.Pago.MontoPago);
+
+            return new ComprobantePago(movimiento.Pago, prestamo, indice + 1, historial.Movimientos.Count,
+                saldoAnterior, movimiento.SaldoDespues, acumulado);
+        }
+
         public async Task<ResultadoOperacion> RegistrarAsync(Pago pago, string? usuarioId)
         {
             var prestamo = await _prestamoRepository.GetByIdAsync(pago.PrestamoId);

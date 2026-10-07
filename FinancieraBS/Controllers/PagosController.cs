@@ -1,6 +1,9 @@
 using BusinessInterfase;
 using BusinessType;
+using System.Text.RegularExpressions;
 using FinancieraBS.Models;
+using FinancieraBS.Services;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +17,17 @@ namespace FinancieraBS.Controllers
         private readonly IPagoProcessor _pagoProcessor;
         private readonly IPrestamoProcessor _prestamoProcessor;
         private readonly UserManager<Usuario> _userManager;
+        private readonly IComprobantePdfService _pdfService;
+        private readonly NegocioOptions _negocio;
 
-        public PagosController(IPagoProcessor pagoProcessor, IPrestamoProcessor prestamoProcessor, UserManager<Usuario> userManager)
+        public PagosController(IPagoProcessor pagoProcessor, IPrestamoProcessor prestamoProcessor, UserManager<Usuario> userManager,
+            IComprobantePdfService pdfService, IOptions<NegocioOptions> negocio)
         {
             _pagoProcessor = pagoProcessor;
             _prestamoProcessor = prestamoProcessor;
             _userManager = userManager;
+            _pdfService = pdfService;
+            _negocio = negocio.Value;
         }
 
         public async Task<IActionResult> Index(string? q, int? prestamoId, DateTime? desde, DateTime? hasta)
@@ -36,32 +44,54 @@ namespace FinancieraBS.Controllers
 
         public async Task<IActionResult> Create(int? prestamoId)
         {
-            // Si se entra desde un préstamo, al guardar se regresa a su detalle
-            ViewBag.VolverADetalle = prestamoId.HasValue;
             await CargarPrestamosAsync(prestamoId, soloActivos: true);
             return View(new Pago { PrestamoId = prestamoId ?? 0 });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Pago pago, bool volverADetalle = false)
+        public async Task<IActionResult> Create(Pago pago)
         {
             if (ModelState.IsValid)
             {
                 pago.FechaPago = DateTime.Now;
                 var resultado = await _pagoProcessor.RegistrarAsync(pago, _userManager.GetUserId(User));
                 if (resultado.Exito)
-                {
-                    return volverADetalle
-                        ? RedirectToAction("Detalle", "Prestamos", new { id = pago.PrestamoId })
-                        : RedirectToAction(nameof(Index));
-                }
+                    return RedirectToAction(nameof(Comprobante), new { id = pago.Id, nuevo = true });
                 ModelState.AddModelError(string.Empty, resultado.Error!);
             }
 
-            ViewBag.VolverADetalle = volverADetalle;
             await CargarPrestamosAsync(pago.PrestamoId, soloActivos: true);
             return View(pago);
+        }
+
+        public async Task<IActionResult> Comprobante(int id, bool nuevo = false)
+        {
+            var comprobante = await _pagoProcessor.ObtenerComprobanteAsync(id);
+            if (comprobante == null) return NotFound();
+
+            var mensaje = MensajeComprobante(comprobante);
+            var telefono = TelefonoWhatsApp(comprobante.Prestamo.Cliente?.Telefono);
+            return View(new ComprobanteViewModel
+            {
+                Comprobante = comprobante,
+                NombreNegocio = _negocio.Nombre,
+                MensajeCompartir = mensaje,
+                WhatsAppUrl = $"https://wa.me/{telefono}?text={Uri.EscapeDataString(mensaje)}",
+                Nuevo = nuevo
+            });
+        }
+
+        public async Task<IActionResult> ComprobantePdf(int id, bool descargar = false)
+        {
+            var comprobante = await _pagoProcessor.ObtenerComprobanteAsync(id);
+            if (comprobante == null) return NotFound();
+
+            var pdf = _pdfService.Generar(comprobante);
+            Response.Headers["Cache-Control"] = "private, no-store";
+            return descargar
+                ? File(pdf, "application/pdf", $"Comprobante-{comprobante.Folio}.pdf")
+                : File(pdf, "application/pdf");
         }
 
         public async Task<IActionResult> Edit(int id)
@@ -103,6 +133,29 @@ namespace FinancieraBS.Controllers
             var resultado = await _pagoProcessor.EliminarAsync(id);
             if (!resultado.Exito) TempData["Error"] = resultado.Error;
             return RedirectToAction(nameof(Index));
+        }
+
+        private string MensajeComprobante(ComprobantePago c)
+        {
+            var lineas = new List<string>
+            {
+                $"*{_negocio.Nombre}*",
+                $"Comprobante de pago {c.Folio}",
+                $"Cliente: {c.Prestamo.Cliente?.NombreCompleto}",
+                $"Préstamo: #{c.Prestamo.Id}",
+                $"Fecha: {c.Pago.FechaPago:dd/MM/yyyy HH:mm}",
+                $"Abono: {c.Pago.MontoPago:C2}",
+                $"Saldo restante: {c.SaldoDespues:C2}"
+            };
+            if (c.Liquidado) lineas.Add("¡Préstamo liquidado! Gracias.");
+            return string.Join("\n", lineas);
+        }
+
+        // 10 dígitos (México) -> se antepone la lada del país; vacío -> WhatsApp pide elegir el contacto
+        private string TelefonoWhatsApp(string? telefono)
+        {
+            var digitos = Regex.Replace(telefono ?? string.Empty, @"\D", string.Empty);
+            return digitos.Length == 10 ? _negocio.CodigoPaisWhatsApp + digitos : digitos;
         }
 
         private async Task CargarPrestamosAsync(int? seleccionado, bool soloActivos)

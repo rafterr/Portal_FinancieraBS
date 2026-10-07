@@ -1,0 +1,94 @@
+@model FinancieraBS.Models.ComprobanteViewModel
+
+@{
+    var c = Model.Comprobante;
+    var p = c.Prestamo;
+    ViewData["Title"] = $"Comprobante {c.Folio}";
+    var urlPdf = Url.Action("ComprobantePdf", new { id = c.Pago.Id });
+}
+
+<div class="container mt-4" style="max-width: 720px;">
+    @if (Model.Nuevo)
+    {
+        <div class="alert alert-success">Pago registrado correctamente.</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center border-bottom pb-3 mb-3">
+                <img src="~/img/logo.svg" alt="" width="48" height="48" class="me-3" />
+                <div class="flex-grow-1">
+                    <div class="fs-5 fw-bold text-primary-emphasis">@Model.NombreNegocio</div>
+                    <div class="small text-muted">Comprobante de pago</div>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold">Folio @c.Folio</div>
+                    <div class="small text-muted">@c.Pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            </div>
+
+            <dl class="row mb-2">
+                <dt class="col-4 text-muted fw-normal">Cliente</dt>
+                <dd class="col-8 fw-semibold">@p.Cliente?.NombreCompleto</dd>
+                <dt class="col-4 text-muted fw-normal">Préstamo</dt>
+                <dd class="col-8"><a asp-controller="Prestamos" asp-action="Detalle" asp-route-id="@p.Id">#@p.Id</a> · pago @c.NumeroPago de @c.TotalPagos</dd>
+                <dt class="col-4 text-muted fw-normal">Recibió</dt>
+                <dd class="col-8">@(c.Pago.Usuario?.Email ?? "—")</dd>
+            </dl>
+
+            <div class="d-flex justify-content-between align-items-center rounded p-3 mb-3" style="background:#f1effb">
+                <span>Monto abonado</span>
+                <span class="fs-3 fw-bold" style="color:#5a4bb5">@c.Pago.MontoPago.ToString("C2")</span>
+            </div>
+
+            <table class="table table-sm mb-0">
+                <tr><td>Saldo anterior</td><td class="text-end">@c.SaldoAnterior.ToString("C2")</td></tr>
+                <tr><td class="fw-semibold">Saldo restante</td><td class="text-end fw-semibold">@c.SaldoDespues.ToString("C2")</td></tr>
+                <tr><td>Pagado a la fecha</td><td class="text-end">@c.PagadoAcumulado.ToString("C2") de @p.Total.ToString("C2")</td></tr>
+            </table>
+
+            @if (c.Liquidado)
+            {
+                <div class="text-center mt-3"><span class="badge bg-success fs-6">PRÉSTAMO LIQUIDADO</span></div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a href="@urlPdf" target="_blank" class="btn btn-outline-primary">Ver PDF</a>
+        <a href="@Url.Action("ComprobantePdf", new { id = c.Pago.Id, descargar = true })" class="btn btn-primary">Descargar PDF</a>
+        <button type="button" id="btnCompartir" class="btn btn-success d-none">Compartir PDF</button>
+        <a href="@Model.WhatsAppUrl" target="_blank" rel="noopener" class="btn btn-outline-success">Enviar por WhatsApp</a>
+        <a asp-controller="Prestamos" asp-action="Detalle" asp-route-id="@p.Id" class="btn btn-secondary ms-md-auto">Volver al préstamo</a>
+    </div>
+    <p class="small text-muted mt-2">
+        "Compartir PDF" adjunta el archivo desde el celular (WhatsApp, correo, etc.).
+        "Enviar por WhatsApp" manda un resumen en texto
+        @(string.IsNullOrWhiteSpace(p.Cliente?.Telefono) ? "(el cliente no tiene teléfono: WhatsApp pedirá elegir el contacto)" : $"al {p.Cliente!.Telefono}").
+    </p>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const boton = document.getElementById('btnCompartir');
+            const archivoPrueba = new File([new Blob(['%PDF'])], 'prueba.pdf', { type: 'application/pdf' });
+            // Solo se muestra donde el navegador permite compartir archivos (celulares principalmente)
+            if (!navigator.canShare || !navigator.canShare({ files: [archivoPrueba] })) return;
+            boton.classList.remove('d-none');
+            boton.addEventListener('click', async function () {
+                boton.disabled = true;
+                try {
+                    const respuesta = await fetch('@urlPdf', { credentials: 'same-origin' });
+                    const blob = await respuesta.blob();
+                    const archivo = new File([blob], 'Comprobante-@(c.Folio).pdf', { type: 'application/pdf' });
+                    await navigator.share({ files: [archivo], title: 'Comprobante @c.Folio', text: @Json.Serialize(Model.MensajeCompartir) });
+                } catch (e) {
+                    if (e.name !== 'AbortError') alert('No se pudo compartir el comprobante. Use "Descargar PDF".');
+                } finally {
+                    boton.disabled = false;
+                }
+            });
+        })();
+    </script>
+}

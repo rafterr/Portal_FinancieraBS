@@ -97,6 +97,7 @@
                             <td class="text-end">$@pago.MontoPago.ToString("N2")</td>
                             <td>@(pago.Usuario?.Email ?? "—")</td>
                             <td class="text-nowrap">
+                                <a asp-action="Comprobante" asp-route-id="@pago.Id" class="btn btn-sm btn-outline-primary">Comprobante</a>
                                 <a asp-action="Edit" asp-route-id="@pago.Id" class="btn btn-sm btn-warning">Editar</a>
                                 <a asp-action="Delete" asp-route-id="@pago.Id" class="btn btn-sm btn-danger">Eliminar</a>
                             </td>

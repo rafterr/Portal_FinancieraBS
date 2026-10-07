@@ -24,6 +24,18 @@ Portal de Administración de Cobro y Captación: clientes, préstamos, pagos y s
 - No se pueden eliminar préstamos con pagos ni clientes con préstamos.
 - Documentos: PDF, JPG o PNG de hasta 5 MB. Se valida el contenido real del archivo. Hay un comprobante por cliente y un pagaré y una INE por préstamo; subir otro del mismo tipo lo reemplaza. Solo un `Admin` puede eliminarlos.
 
+## Comprobantes de pago
+Al registrar un pago se abre su comprobante. También se puede abrir desde la lista de Pagos o desde el detalle del préstamo. Opciones:
+- **Ver / Descargar PDF**: tamaño A5, con logotipo, folio (`P-000123`), saldo anterior y saldo restante.
+- **Compartir PDF**: en el celular abre el menú de compartir con el PDF adjunto (WhatsApp, correo, etc.).
+- **Enviar por WhatsApp**: abre WhatsApp con el teléfono del cliente y un resumen del abono en texto. A los teléfonos de 10 dígitos se les antepone la lada `52`.
+
+Los PDF se generan con [QuestPDF](https://www.questpdf.com/license/), con licencia *Community*: es gratuita para negocios con ingresos anuales menores a USD 1 millón.
+
+## Datos del negocio y logotipo
+En `appsettings.json`, sección `Negocio`: `Nombre`, `Telefono`, `Direccion` (aparecen en los comprobantes) y `CodigoPaisWhatsApp`.
+El logotipo está en `FinancieraBS/wwwroot/img/logo.svg`. Para usar el logo propio, reemplaza ese archivo por otro **SVG cuadrado**; se usa en la barra superior, el login, el ícono del navegador y los PDF.
+
 ## Roles
 - **Admin**: todo, incluido el módulo **Usuarios** (alta de usuarios, roles y contraseñas).
 - **Cobrador**: clientes, préstamos, pagos y documentos.

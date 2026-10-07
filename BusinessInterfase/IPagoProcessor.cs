@@ -7,6 +7,7 @@ namespace BusinessInterfase
         Task<Pago?> GetByIdAsync(int id);
         Task<List<Pago>> GetAllAsync();
         Task<List<Pago>> BuscarAsync(int? prestamoId, string? texto, DateTime? desde, DateTime? hasta);
+        Task<ComprobantePago?> ObtenerComprobanteAsync(int id);
         Task<ResultadoOperacion> RegistrarAsync(Pago pago, string? usuarioId);
         Task<ResultadoOperacion> ActualizarAsync(Pago pago);
         Task<ResultadoOperacion> EliminarAsync(int id);

@@ -101,6 +101,7 @@
                             <td class="text-end">$@m.SaldoDespues.ToString("N2")</td>
                             <td>@(m.Pago.Usuario?.Email ?? "—")</td>
                             <td class="text-end text-nowrap">
+                                <a asp-controller="Pagos" asp-action="Comprobante" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-primary">Comprobante</a>
                                 <a asp-controller="Pagos" asp-action="Edit" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-warning">Editar</a>
                                 <a asp-controller="Pagos" asp-action="Delete" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
                             </td>

@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - FinancieraBS</title>
+    <title>@ViewData["Title"] - Financiera BS</title>
+    <link rel="icon" type="image/svg+xml" href="~/img/logo.svg" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/FinancieraBS.styles.css" asp-append-version="true" />
@@ -12,7 +13,9 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">FinancieraBS</a>
+                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/img/logo.svg" alt="" width="32" height="32" class="me-2" />Financiera BS
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -86,7 +89,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container text-center py-3">
-            &copy; 2026 - Sistema de Gestión Financiera
+            &copy; @DateTime.Now.Year - Financiera BS
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

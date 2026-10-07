@@ -3,7 +3,10 @@ using BusinessLayer;
 using BusinessType;
 using DataInterfase;
 using DataLayer;
+using System.Globalization;
 using FinancieraBS.Data;
+using FinancieraBS.Models;
+using FinancieraBS.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -96,6 +99,11 @@ builder.Services.AddDataProtection()
     .SetApplicationName("FinancieraBS")
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys")));
 
+// Comprobantes PDF (QuestPDF, licencia Community: ingresos anuales menores a USD 1M)
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+builder.Services.Configure<NegocioOptions>(builder.Configuration.GetSection("Negocio"));
+builder.Services.AddSingleton<IComprobantePdfService, ComprobantePdfService>();
+
 builder.Services.AddControllersWithViews();
 
 // Configurar la sesión
@@ -122,6 +130,17 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// Formato de moneda, números y fechas de México, sin depender del idioma del servidor
+var culturaMx = new CultureInfo("es-MX");
+CultureInfo.DefaultThreadCurrentCulture = culturaMx;
+CultureInfo.DefaultThreadCurrentUICulture = culturaMx;
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(culturaMx),
+    SupportedCultures = new[] { culturaMx },
+    SupportedUICultures = new[] { culturaMx }
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
