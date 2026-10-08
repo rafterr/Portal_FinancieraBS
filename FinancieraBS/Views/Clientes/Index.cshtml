@@ -38,7 +38,7 @@
     else
     {
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
+            <table class="table table-striped table-hover align-middle table-cards">
                 <thead class="table-dark">
                     <tr>
                         <th>Cliente</th>
@@ -54,10 +54,11 @@
                     {
                         var activos = cliente.Prestamos.Count(p => p.Estatus != BusinessType.EstatusPrestamo.Pagado);
                         <tr>
-                            <td>@cliente.NombreCompleto</td>
-                            <td><a href="tel:@cliente.Telefono">@cliente.Telefono</a></td>
-                            <td>@cliente.Email</td>
-                            <td>
+                            <td data-label="Cliente" class="fw-semibold">@cliente.NombreCompleto</td>
+                            <td data-label="Teléfono"><a href="tel:@cliente.Telefono">@cliente.Telefono</a></td>
+                            <td data-label="Email">@cliente.Email</td>
+                            <td data-label="Préstamos activos">
+                                <span>
                                 @if (activos > 0)
                                 {
                                     <span class="badge bg-primary">@activos</span>
@@ -67,13 +68,14 @@
                                     <span class="text-muted">0</span>
                                 }
                                 <small class="text-muted">de @cliente.Prestamos.Count</small>
+                                </span>
                             </td>
-                            <td>
+                            <td data-label="Estatus">
                                 <span class="badge bg-@(cliente.Estatus == "Activo" ? "success" : "secondary")">
                                     @cliente.Estatus
                                 </span>
                             </td>
-                            <td class="text-nowrap">
+                            <td class="text-nowrap acciones">
                                 <a asp-controller="Prestamos" asp-action="Index" asp-route-clienteId="@cliente.Id" class="btn btn-sm btn-info text-white">Préstamos</a>
                                 <a asp-controller="Prestamos" asp-action="Create" asp-route-clienteId="@cliente.Id" class="btn btn-sm btn-outline-primary">+ Préstamo</a>
                                 <a asp-action="Edit" asp-route-id="@cliente.Id" class="btn btn-sm btn-warning">Editar</a>

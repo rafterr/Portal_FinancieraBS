@@ -10,7 +10,7 @@
         else
         {
             <div class="table-responsive">
-                <table class="table table-sm align-middle">
+                <table class="table table-sm align-middle table-cards">
                     <thead>
                         <tr>
                             <th>Tipo</th>
@@ -24,11 +24,11 @@
                         @foreach (var doc in Model.Documentos)
                         {
                             <tr>
-                                <td>@Html.DisplayFor(_ => doc.Tipo)</td>
-                                <td>@doc.NombreOriginal <small class="text-muted">(@((doc.Tamano / 1024.0).ToString("N0")) KB)</small></td>
-                                <td>@(doc.PrestamoId.HasValue ? $"#{doc.PrestamoId}" : "—")</td>
-                                <td>@doc.FechaCarga.ToString("dd/MM/yyyy HH:mm") <small class="text-muted">@doc.Usuario?.Email</small></td>
-                                <td class="text-end text-nowrap">
+                                <td data-label="Tipo">@Html.DisplayFor(_ => doc.Tipo)</td>
+                                <td data-label="Archivo"><span>@doc.NombreOriginal <small class="text-muted">(@((doc.Tamano / 1024.0).ToString("N0")) KB)</small></span></td>
+                                <td data-label="Préstamo">@(doc.PrestamoId.HasValue ? $"#{doc.PrestamoId}" : "—")</td>
+                                <td data-label="Cargado"><span>@doc.FechaCarga.ToString("dd/MM/yyyy HH:mm") <small class="text-muted">@doc.Usuario?.Email</small></span></td>
+                                <td class="text-end text-nowrap acciones">
                                     <a asp-controller="Documentos" asp-action="Ver" asp-route-id="@doc.Id" target="_blank" class="btn btn-sm btn-outline-primary">Ver</a>
                                     <a asp-controller="Documentos" asp-action="Ver" asp-route-id="@doc.Id" asp-route-descargar="true" class="btn btn-sm btn-outline-secondary">Descargar</a>
                                     @if (User.IsInRole(BusinessType.Roles.Admin))
