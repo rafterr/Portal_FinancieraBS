@@ -18,12 +18,15 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
+    var raiz = builder.Environment.ContentRootPath;
+    var archivoEntorno = $"appsettings.{builder.Environment.EnvironmentName}.json";
+    var encontrados = Directory.GetFiles(raiz, "appsettings*").Select(Path.GetFileName);
     throw new InvalidOperationException(
         $"Falta la cadena de conexión 'ConnectionStrings:DefaultConnection' (entorno: {builder.Environment.EnvironmentName}). " +
-        "En local configúrela con User Secrets (clic derecho en el proyecto FinancieraBS > Administrar secretos de usuario, " +
-        "o 'dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"...\"' dentro de la carpeta FinancieraBS); " +
-        "los User Secrets solo se cargan con ASPNETCORE_ENVIRONMENT=Development. " +
-        "En el hosting use appsettings.Production.json o variables de entorno. Ver README.md.");
+        $"Carpeta de la aplicación: {raiz}. ¿Existe {archivoEntorno} ahí?: {(File.Exists(Path.Combine(raiz, archivoEntorno)) ? "sí (revise que tenga ConnectionStrings > DefaultConnection)" : "NO")}. " +
+        $"Archivos appsettings encontrados: {string.Join(", ", encontrados)}. " +
+        "En local configúrela con User Secrets (solo se cargan con ASPNETCORE_ENVIRONMENT=Development); " +
+        "en el hosting use appsettings.Production.json o la variable de entorno ConnectionStrings__DefaultConnection. Ver README.md.");
 }
 
 builder.Services.AddDbContext<FinancieraContext>(options =>
@@ -63,10 +66,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccesoDenegado";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.Cookie.HttpOnly = true;
-    // En producción la cookie solo viaja por HTTPS; en local se permite el perfil http
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-        ? CookieSecurePolicy.SameAsRequest
-        : CookieSecurePolicy.Always;
+    // Secure cuando la petición llega por HTTPS. Con "Always" el navegador descarta la cookie
+    // si el sitio se abre por http:// y el login regresa a la misma página sin ningún mensaje.
+    // Para forzar HTTPS active el certificado SSL del hosting (UseHttpsRedirection redirige solo).
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     options.SlidingExpiration = true;
 });
 

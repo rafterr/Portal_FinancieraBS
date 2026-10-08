@@ -75,3 +75,6 @@ La aplicación aplica las migraciones pendientes al iniciar (`Database:AplicarMi
 
 ## Publicar
 Ver [docs/DESPLIEGUE_MONSTERASP.md](docs/DESPLIEGUE_MONSTERASP.md).
+
+## Manual de usuario
+[docs/Manual_de_usuario_Financiera_BS.pdf](docs/Manual_de_usuario_Financiera_BS.pdf): acceso, clientes, préstamos, pagos y comprobantes, documentos y usuarios, con capturas de pantalla.
