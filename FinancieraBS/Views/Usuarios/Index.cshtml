@@ -11,7 +11,7 @@
     </div>
 
     <div class="table-responsive">
-        <table class="table table-striped table-hover">
+        <table class="table table-striped table-hover align-middle table-cards">
             <thead class="table-dark">
                 <tr>
                     <th>Email</th>
@@ -27,17 +27,19 @@
                     var usuario = item.Usuario;
                     var bloqueado = usuario.LockoutEnd.HasValue && usuario.LockoutEnd > DateTimeOffset.UtcNow;
                     <tr>
-                        <td>
+                        <td data-label="Email">
+                            <span>
                             @usuario.Email
                             @if (bloqueado)
                             {
                                 <span class="badge bg-danger ms-1">Bloqueado</span>
                             }
+                            </span>
                         </td>
-                        <td>@usuario.PhoneNumber</td>
-                        <td><span class="badge bg-@(item.Rol == BusinessType.Roles.Admin ? "dark" : "info")">@(item.Rol ?? "Sin rol")</span></td>
-                        <td>@usuario.FechaCreacion.ToString("dd/MM/yyyy")</td>
-                        <td>
+                        <td data-label="Teléfono">@usuario.PhoneNumber</td>
+                        <td data-label="Rol"><span class="badge bg-@(item.Rol == BusinessType.Roles.Admin ? "dark" : "info")">@(item.Rol ?? "Sin rol")</span></td>
+                        <td data-label="Fecha creación">@usuario.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                        <td class="text-nowrap acciones">
                             <a asp-action="Edit" asp-route-id="@usuario.Id" class="btn btn-sm btn-warning">Editar</a>
                             <a asp-action="Delete" asp-route-id="@usuario.Id" class="btn btn-sm btn-danger">Eliminar</a>
                         </td>

@@ -51,7 +51,7 @@
     else
     {
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
+            <table class="table table-striped table-hover align-middle table-cards">
                 <thead class="table-dark">
                     <tr>
                         <th>#</th>
@@ -70,16 +70,16 @@
                     @foreach (var prestamo in Model.Prestamos)
                     {
                         <tr>
-                            <td><a asp-action="Detalle" asp-route-id="@prestamo.Id">#@prestamo.Id</a></td>
-                            <td>@(prestamo.Cliente?.NombreCompleto ?? "N/A")</td>
-                            <td>$@prestamo.MontoSolicitado.ToString("N2")</td>
-                            <td>@prestamo.Interes%</td>
-                            <td>$@prestamo.Total.ToString("N2")</td>
-                            <td>$@prestamo.SaldoRestante.ToString("N2")</td>
-                            <td>@prestamo.FechaInicio.ToString("dd/MM/yyyy")</td>
-                            <td>@prestamo.FechaFin.ToString("dd/MM/yyyy")</td>
-                            <td><partial name="_EstatusBadge" model="prestamo.Estatus" /></td>
-                            <td class="text-nowrap">
+                            <td data-label="Préstamo" class="fw-semibold"><a asp-action="Detalle" asp-route-id="@prestamo.Id">#@prestamo.Id</a></td>
+                            <td data-label="Cliente">@(prestamo.Cliente?.NombreCompleto ?? "N/A")</td>
+                            <td data-label="Monto">$@prestamo.MontoSolicitado.ToString("N2")</td>
+                            <td data-label="Interés">@prestamo.Interes%</td>
+                            <td data-label="Total">$@prestamo.Total.ToString("N2")</td>
+                            <td data-label="Saldo">$@prestamo.SaldoRestante.ToString("N2")</td>
+                            <td data-label="Fecha inicio">@prestamo.FechaInicio.ToString("dd/MM/yyyy")</td>
+                            <td data-label="Fecha fin">@prestamo.FechaFin.ToString("dd/MM/yyyy")</td>
+                            <td data-label="Estatus"><partial name="_EstatusBadge" model="prestamo.Estatus" /></td>
+                            <td class="text-nowrap acciones">
                                 <a asp-action="Detalle" asp-route-id="@prestamo.Id" class="btn btn-sm btn-info text-white">Ver</a>
                                 @if (prestamo.Estatus != BusinessType.EstatusPrestamo.Pagado)
                                 {

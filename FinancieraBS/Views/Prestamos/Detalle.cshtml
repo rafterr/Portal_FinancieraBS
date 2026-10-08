@@ -18,7 +18,7 @@
                 }
             </div>
         </div>
-        <div class="text-nowrap">
+        <div class="d-flex flex-wrap gap-2">
             @if (p.Estatus != BusinessType.EstatusPrestamo.Pagado)
             {
                 <a asp-controller="Pagos" asp-action="Create" asp-route-prestamoId="@p.Id" class="btn btn-success">Registrar pago</a>
@@ -78,40 +78,8 @@
     }
     else
     {
-        @* En celular: una tarjeta por pago para que los botones queden visibles *@
-        <div class="d-md-none mb-3">
-            <div class="list-group">
-                @{ var k = 1; }
-                @foreach (var m in Model.Movimientos)
-                {
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="fw-semibold">#@(k++) · $@m.Pago.MontoPago.ToString("N2")</div>
-                                <div class="small text-muted">@m.Pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</div>
-                            </div>
-                            <div class="text-end small">
-                                <div class="text-muted">Saldo después</div>
-                                <div class="fw-semibold">$@m.SaldoDespues.ToString("N2")</div>
-                            </div>
-                        </div>
-                        <div class="small text-muted text-break mt-1">Registró: @(m.Pago.Usuario?.Email ?? "—")</div>
-                        <div class="d-flex flex-wrap gap-2 mt-2">
-                            <a asp-controller="Pagos" asp-action="Comprobante" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-primary flex-fill">Comprobante</a>
-                            <a asp-controller="Pagos" asp-action="Edit" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-warning flex-fill">Editar</a>
-                            <a asp-controller="Pagos" asp-action="Delete" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-danger flex-fill">Eliminar</a>
-                        </div>
-                    </div>
-                }
-                <div class="list-group-item d-flex justify-content-between fw-semibold">
-                    <span>Total pagado $@Model.TotalPagado.ToString("N2")</span>
-                    <span>Saldo $@p.SaldoRestante.ToString("N2")</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="table-responsive d-none d-md-block">
-            <table class="table table-striped align-middle">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle table-cards">
                 <thead class="table-dark">
                     <tr>
                         <th>#</th>
@@ -127,12 +95,12 @@
                     @foreach (var m in Model.Movimientos)
                     {
                         <tr>
-                            <td>@(n++)</td>
-                            <td>@m.Pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td class="text-end">$@m.Pago.MontoPago.ToString("N2")</td>
-                            <td class="text-end">$@m.SaldoDespues.ToString("N2")</td>
-                            <td>@(m.Pago.Usuario?.Email ?? "—")</td>
-                            <td class="text-end text-nowrap">
+                            <td data-label="Pago" class="fw-semibold">#@(n++)</td>
+                            <td data-label="Fecha">@m.Pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td data-label="Monto" class="text-end">$@m.Pago.MontoPago.ToString("N2")</td>
+                            <td data-label="Saldo después" class="text-end">$@m.SaldoDespues.ToString("N2")</td>
+                            <td data-label="Registró">@(m.Pago.Usuario?.Email ?? "—")</td>
+                            <td class="text-end text-nowrap acciones">
                                 <a asp-controller="Pagos" asp-action="Comprobante" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-primary">Comprobante</a>
                                 <a asp-controller="Pagos" asp-action="Edit" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-warning">Editar</a>
                                 <a asp-controller="Pagos" asp-action="Delete" asp-route-id="@m.Pago.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
@@ -142,10 +110,10 @@
                 </tbody>
                 <tfoot>
                     <tr class="fw-semibold">
-                        <td colspan="2">Total pagado</td>
-                        <td class="text-end">$@Model.TotalPagado.ToString("N2")</td>
-                        <td class="text-end">$@p.SaldoRestante.ToString("N2")</td>
-                        <td colspan="2"></td>
+                        <td colspan="2" class="d-none d-md-table-cell">Total pagado</td>
+                        <td data-label="Total pagado" class="text-end">$@Model.TotalPagado.ToString("N2")</td>
+                        <td data-label="Saldo restante" class="text-end">$@p.SaldoRestante.ToString("N2")</td>
+                        <td colspan="2" class="d-none d-md-table-cell"></td>
                     </tr>
                 </tfoot>
             </table>
